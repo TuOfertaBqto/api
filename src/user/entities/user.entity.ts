@@ -11,8 +11,13 @@ export enum UserRole {
 
 @Entity('user')
 export class User extends BaseModel {
-  @Column({ type: 'character varying', name: 'code', unique: true })
-  code: string;
+  @Column({
+    type: 'character varying',
+    name: 'code',
+    unique: true,
+    nullable: true,
+  })
+  code?: string;
 
   @Column({ type: 'character varying', name: 'first_name' })
   firstName: string;
