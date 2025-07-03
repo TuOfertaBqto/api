@@ -6,13 +6,10 @@ import {
   IsString,
 } from 'class-validator';
 import { UserRole } from '../entities/user.entity';
-import { PartialType } from '@nestjs/mapped-types';
+import { IntersectionType, PartialType } from '@nestjs/mapped-types';
+import { BaseDTO } from 'src/utils/dto/base.dto';
 
-export class CreateUserDTO {
-  @IsString()
-  @IsOptional()
-  code?: string;
-
+export class UserDTO {
   @IsString()
   @IsNotEmpty()
   firstName: string;
@@ -33,9 +30,6 @@ export class CreateUserDTO {
   @IsString()
   phoneNumber: string;
 
-  @IsOptional()
-  password?: string;
-
   @IsString()
   @IsOptional()
   adress: string;
@@ -45,4 +39,8 @@ export class CreateUserDTO {
   role?: UserRole;
 }
 
-export class UpdateUserDTO extends PartialType(CreateUserDTO) {}
+export class UpdateUserDTO extends PartialType(UserDTO) {}
+
+export class ResponseUserDTO extends IntersectionType(UserDTO, BaseDTO) {
+  code: string;
+}
