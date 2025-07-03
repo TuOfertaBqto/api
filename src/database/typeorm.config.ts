@@ -14,7 +14,7 @@ export default new DataSource({
   database: configService.get('POSTGRES_NAME'),
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   synchronize: false,
-  ssl: configService.get<boolean>('POSTGRES_SSL', false),
+  ssl: configService.get<string>('POSTGRES_SSL') === 'true',
   migrations: ['src/**/migrations/*-migration.ts'],
   migrationsRun: false,
   logging: true,
