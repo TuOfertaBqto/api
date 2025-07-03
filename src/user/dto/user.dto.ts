@@ -39,6 +39,12 @@ export class UserDTO {
   role?: UserRole;
 }
 
+export class CreateUserDTO extends UserDTO {
+  @IsString()
+  @IsOptional()
+  password?: string;
+}
+
 export class UpdateUserDTO extends PartialType(UserDTO) {}
 
 export class ResponseUserDTO extends IntersectionType(UserDTO, BaseDTO) {
