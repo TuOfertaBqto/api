@@ -15,6 +15,7 @@ import { CreateUserDTO, ResponseUserDTO, UpdateUserDTO } from './dto/user.dto';
 import { UserRole } from './entities/user.entity';
 import { instanceToPlain } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
+import { Auth } from 'src/auth/decorators/auth.decorator';
 
 @Controller('user')
 export class UserController {
@@ -30,7 +31,9 @@ export class UserController {
     }
     if (
       createUserDto.role !== undefined &&
-      [UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(createUserDto.role)
+      [UserRole.ADMIN, UserRole.SUPER_ADMIN, UserRole.MAIN].includes(
+        createUserDto.role,
+      )
     ) {
       const defaultPassword = this.configService.get<string>(
         'DEFAULT_ADMIN_PASSWORD',
@@ -50,6 +53,7 @@ export class UserController {
   }
 
   @Get()
+  @Auth(UserRole.MAIN)
   async findAll() {
     const users = await this.userService.findAll();
     return users.map((user) => instanceToPlain(user));
