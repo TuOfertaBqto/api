@@ -14,6 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import { CreateUserDTO, ResponseUserDTO, UpdateUserDTO } from './dto/user.dto';
 import { UserRole } from './entities/user.entity';
 import { instanceToPlain } from 'class-transformer';
+import * as bcrypt from 'bcrypt';
 
 @Controller('user')
 export class UserController {
@@ -40,7 +41,7 @@ export class UserController {
           HttpStatus.BAD_REQUEST,
         );
       }
-      createUserDto.password = defaultPassword;
+      createUserDto.password = await bcrypt.hash(defaultPassword, 10);
     }
 
     const userSaved = await this.userService.create(createUserDto);
