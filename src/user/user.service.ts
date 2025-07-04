@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
 import { Repository } from 'typeorm';
@@ -20,6 +20,14 @@ export class UserService {
 
     const lastCode = lastUser?.code ? parseInt(lastUser.code, 10) : 0;
     return String(lastCode + 1);
+  }
+
+  async findByEmail(email: string): Promise<User> {
+    const user = await this.userRepository.findOneBy({ email });
+    if (!user) {
+      throw new BadRequestException('Invalid request');
+    }
+    return user;
   }
 
   async findAll(): Promise<ResponseUserDTO[]> {
