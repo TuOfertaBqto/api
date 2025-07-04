@@ -11,8 +11,9 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ConfigService } from '@nestjs/config';
-import { CreateUserDTO, UpdateUserDTO, UserDTO } from './dto/user.dto';
+import { CreateUserDTO, ResponseUserDTO, UpdateUserDTO } from './dto/user.dto';
 import { UserRole } from './entities/user.entity';
+import { instanceToPlain } from 'class-transformer';
 
 @Controller('user')
 export class UserController {
@@ -22,7 +23,7 @@ export class UserController {
   ) {}
 
   @Post()
-  async create(@Body() createUserDto: CreateUserDTO): Promise<UserDTO> {
+  async create(@Body() createUserDto: CreateUserDTO): Promise<ResponseUserDTO> {
     if (
       createUserDto.role !== undefined &&
       [UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(createUserDto.role)
@@ -39,22 +40,30 @@ export class UserController {
       createUserDto.password = defaultPassword;
     }
 
-    return this.userService.create(createUserDto);
+    const userSaved = await this.userService.create(createUserDto);
+
+    return instanceToPlain(userSaved) as ResponseUserDTO;
   }
 
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  async findAll() {
+    const users = await this.userService.findAll();
+    return users.map((user) => instanceToPlain(user));
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.userService.findOne(id);
+  async findOne(@Param('id') id: string) {
+    const user = await this.userService.findOne(id);
+    return instanceToPlain(user) as ResponseUserDTO;
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDTO) {
-    return this.userService.update(id, updateUserDto);
+  async update(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDTO,
+  ): Promise<ResponseUserDTO> {
+    const userUpdated = await this.userService.update(id, updateUserDto);
+    return instanceToPlain(userUpdated) as ResponseUserDTO;
   }
 
   @Delete(':id')

@@ -1,3 +1,4 @@
+import { Exclude } from 'class-transformer';
 import { BaseModel } from 'src/utils/entity';
 import { Column, Entity } from 'typeorm';
 
@@ -34,6 +35,7 @@ export class User extends BaseModel {
   @Column({ type: 'character varying', name: 'phone_number', nullable: true })
   phoneNumber: string;
 
+  @Exclude()
   @Column({ type: 'character varying' })
   password: string;
 
