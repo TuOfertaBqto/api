@@ -11,6 +11,17 @@ export class UserService {
     private readonly userRepository: Repository<User>,
   ) {}
 
+  async getNextAvailableCode(): Promise<string> {
+    const lastUser = await this.userRepository
+      .createQueryBuilder('user')
+      .where('user.code IS NOT NULL')
+      .orderBy('CAST(user.code AS INTEGER)', 'DESC')
+      .getOne();
+
+    const lastCode = lastUser?.code ? parseInt(lastUser.code, 10) : 0;
+    return String(lastCode + 1);
+  }
+
   async findAll(): Promise<ResponseUserDTO[]> {
     return this.userRepository.find();
   }

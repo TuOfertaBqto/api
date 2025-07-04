@@ -36,7 +36,7 @@ export class User extends BaseModel {
   phoneNumber: string;
 
   @Exclude()
-  @Column({ type: 'character varying' })
+  @Column({ type: 'character varying', name: 'password', nullable: true })
   password: string;
 
   @Column({ type: 'character varying', name: 'adress' })

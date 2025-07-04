@@ -43,6 +43,9 @@ export class CreateUserDTO extends UserDTO {
   @IsString()
   @IsOptional()
   password?: string;
+
+  @IsOptional()
+  code?: string;
 }
 
 export class UpdateUserDTO extends PartialType(UserDTO) {}

@@ -24,6 +24,9 @@ export class UserController {
 
   @Post()
   async create(@Body() createUserDto: CreateUserDTO): Promise<ResponseUserDTO> {
+    if (createUserDto.role && createUserDto.role === UserRole.VENDOR) {
+      createUserDto.code = await this.userService.getNextAvailableCode();
+    }
     if (
       createUserDto.role !== undefined &&
       [UserRole.ADMIN, UserRole.SUPER_ADMIN].includes(createUserDto.role)
