@@ -4,6 +4,7 @@ import { Contract } from './entities/contract.entity';
 import { Repository } from 'typeorm';
 import { CreateContractDTO, UpdateContractDTO } from './dto/contract.dto';
 import { UserService } from 'src/user/user.service';
+import { instanceToPlain } from 'class-transformer';
 
 @Injectable()
 export class ContractService {
@@ -40,15 +41,16 @@ export class ContractService {
     return this.contractRepo.find();
   }
 
-  async findOne(id: string): Promise<Contract | null> {
+  async findOne(id: string): Promise<Contract> {
     const contract = await this.contractRepo.findOne({
       where: { id },
+      relations: ['vendorId', 'customerId'],
     });
     if (!contract) {
       throw new NotFoundException(`Contract #${id} not found`);
     }
 
-    return contract;
+    return instanceToPlain(contract) as Contract;
   }
 
   async update(id: string, dto: UpdateContractDTO): Promise<Contract> {
