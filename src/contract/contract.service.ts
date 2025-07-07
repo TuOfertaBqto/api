@@ -37,8 +37,12 @@ export class ContractService {
     return this.contractRepo.save(contract);
   }
 
-  findAll(): Promise<Contract[]> {
-    return this.contractRepo.find();
+  async findAll(): Promise<Contract[]> {
+    const contracts = await this.contractRepo.find({
+      relations: ['vendorId', 'customerId'],
+    });
+
+    return instanceToPlain(contracts) as Contract[];
   }
 
   async findOne(id: string): Promise<Contract> {
