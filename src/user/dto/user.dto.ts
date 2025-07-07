@@ -50,6 +50,4 @@ export class CreateUserDTO extends UserDTO {
 
 export class UpdateUserDTO extends PartialType(UserDTO) {}
 
-export class ResponseUserDTO extends IntersectionType(UserDTO, BaseDTO) {
-  code?: string | undefined;
-}
+export class ResponseUserDTO extends IntersectionType(CreateUserDTO, BaseDTO) {}
