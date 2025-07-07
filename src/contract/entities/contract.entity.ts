@@ -17,21 +17,21 @@ export class Contract extends BaseModel {
   @JoinColumn({ name: 'customer_id' })
   customerId: User;
 
-  @Column({ type: 'datetime', name: 'request_date' })
+  @Column({ type: 'timestamp', name: 'request_date' })
   requestDate: Date;
 
-  @Column({ type: 'datetime', name: 'start_date', nullable: true })
+  @Column({ type: 'timestamp', name: 'start_date', nullable: true })
   startDate: Date;
 
-  @Column({ type: 'datetime', name: 'end_date', nullable: true })
+  @Column({ type: 'timestamp', name: 'end_date', nullable: true })
   endDate: Date;
 
-  @Column({ type: 'integer', name: 'installment_amount' })
+  @Column({ type: 'int', name: 'installment_amount', default: 0 })
   installmentAmount: number;
 
   @Column({ type: 'enum', enum: Agreement, name: 'agreement' })
   agreement: Agreement;
 
-  @Column({ type: 'integer', name: 'total_price' })
+  @Column({ type: 'int', name: 'total_price', default: 0 })
   totalPrice: number;
 }
