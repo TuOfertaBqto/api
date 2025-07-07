@@ -34,6 +34,6 @@ export class CategoryService {
   }
 
   async remove(id: string): Promise<void> {
-    await this.categoryRepo.softDelete(id);
+    await this.categoryRepo.delete(id);
   }
 }
