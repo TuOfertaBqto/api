@@ -15,5 +15,5 @@ export class Product extends BaseModel {
 
   @ManyToOne(() => Category)
   @JoinColumn({ name: 'category_id' })
-  category: Category;
+  categoryId: Category;
 }
