@@ -17,6 +17,9 @@ export class Contract extends BaseModel {
   @JoinColumn({ name: 'customer_id' })
   customerId: User;
 
+  @Column({ type: 'int', generated: 'increment', unique: true })
+  code: number;
+
   @Column({ type: 'timestamp', name: 'request_date' })
   requestDate: Date;
 
