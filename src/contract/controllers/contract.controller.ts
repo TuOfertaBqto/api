@@ -7,8 +7,8 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ContractService } from './contract.service';
-import { CreateContractDTO, UpdateContractDTO } from './dto/contract.dto';
+import { ContractService } from '../services/contract.service';
+import { CreateContractDTO, UpdateContractDTO } from '../dto/contract.dto';
 
 @Controller('contract')
 export class ContractController {
