@@ -4,8 +4,8 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { ContractProduct } from './contract-product.entity';
 
 export enum Agreement {
-  MONTHLY = 'monthly',
-  QUARTERLY = 'quarterly',
+  WEEKLY = 'weekly',
+  FORTNIGHTLY = 'fortnightly',
 }
 
 @Entity('contract')
