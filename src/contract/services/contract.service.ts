@@ -39,7 +39,7 @@ export class ContractService {
 
   async findAll(): Promise<Contract[]> {
     const contracts = await this.contractRepo.find({
-      relations: ['vendorId', 'customerId'],
+      relations: ['vendorId', 'customerId', 'products', 'products.product'],
     });
 
     return instanceToPlain(contracts) as Contract[];
@@ -48,7 +48,7 @@ export class ContractService {
   async findOne(id: string): Promise<Contract> {
     const contract = await this.contractRepo.findOne({
       where: { id },
-      relations: ['vendorId', 'customerId'],
+      relations: ['vendorId', 'customerId', 'products', 'products.product'],
     });
     if (!contract) {
       throw new NotFoundException(`Contract #${id} not found`);

@@ -11,7 +11,7 @@ export enum ContractProductStatus {
 
 @Entity('contract_product')
 export class ContractProduct extends BaseModel {
-  @ManyToOne(() => Contract)
+  @ManyToOne(() => Contract, (contract) => contract.products)
   @JoinColumn({ name: 'contract_id' })
   contract: Contract;
 

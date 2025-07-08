@@ -1,6 +1,7 @@
 import { User } from 'src/user/entities/user.entity';
 import { BaseModel } from 'src/utils/entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { ContractProduct } from './contract-product.entity';
 
 export enum Agreement {
   MONTHLY = 'monthly',
@@ -37,4 +38,7 @@ export class Contract extends BaseModel {
 
   @Column({ type: 'int', name: 'total_price', default: 0 })
   totalPrice: number;
+
+  @OneToMany(() => ContractProduct, (cp) => cp.contract, { cascade: true })
+  products: ContractProduct[];
 }
