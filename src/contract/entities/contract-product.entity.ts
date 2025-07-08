@@ -19,7 +19,7 @@ export class ContractProduct extends BaseModel {
   @JoinColumn({ name: 'product_id' })
   product: Product;
 
-  @Column({ type: 'timestamp', name: 'delivery_date' })
+  @Column({ type: 'timestamp', name: 'delivery_date', nullable: true })
   deliveryDate: Date;
 
   @Column({

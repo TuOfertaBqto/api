@@ -18,7 +18,8 @@ export class CreateContractProductDTO {
   productId: string;
 
   @IsDateString()
-  deliveryDate: Date;
+  @IsOptional()
+  deliveryDate?: Date;
 
   @IsEnum(ContractProductStatus)
   @IsOptional()
