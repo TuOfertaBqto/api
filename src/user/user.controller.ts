@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ConfigService } from '@nestjs/config';
@@ -54,8 +55,8 @@ export class UserController {
 
   @Get()
   @Auth(UserRole.MAIN)
-  async findAll() {
-    const users = await this.userService.findAll();
+  async findAll(@Query('role') role?: UserRole) {
+    const users = await this.userService.findAll(role);
     return users.map((user) => instanceToPlain(user));
   }
 

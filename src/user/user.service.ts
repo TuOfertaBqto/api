@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { User } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
 import { Repository } from 'typeorm';
 import { ResponseUserDTO, UpdateUserDTO, UserDTO } from './dto/user.dto';
 
@@ -34,8 +34,13 @@ export class UserService {
     return user;
   }
 
-  async findAll(): Promise<ResponseUserDTO[]> {
-    return this.userRepository.find();
+  async findAll(role?: UserRole): Promise<ResponseUserDTO[]> {
+    const where = role ? { role } : {};
+    const users = await this.userRepository.find({
+      where,
+    });
+
+    return users;
   }
 
   async findOne(id: string): Promise<User> {
