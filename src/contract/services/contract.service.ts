@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Contract } from './entities/contract.entity';
+import { Contract } from '../entities/contract.entity';
 import { Repository } from 'typeorm';
-import { CreateContractDTO, UpdateContractDTO } from './dto/contract.dto';
+import { CreateContractDTO, UpdateContractDTO } from '../dto/contract.dto';
 import { UserService } from 'src/user/user.service';
 import { instanceToPlain } from 'class-transformer';
 
