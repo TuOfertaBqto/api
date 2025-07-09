@@ -31,14 +31,16 @@ export class ContractProductService {
     return item;
   }
 
-  async create(dto: CreateContractProductDTO): Promise<ContractProduct> {
-    const item = this.contractProductRepo.create({
-      contract: { id: dto.contractId } as Contract,
-      product: { id: dto.productId } as Product,
-      deliveryDate: dto.deliveryDate,
-      status: dto.status,
-    });
-    return this.contractProductRepo.save(item);
+  async create(dto: CreateContractProductDTO[]): Promise<ContractProduct[]> {
+    const entities = dto.map((p) =>
+      this.contractProductRepo.create({
+        contract: { id: p.contractId },
+        product: { id: p.productId },
+        quantity: p.quantity,
+      }),
+    );
+
+    return this.contractProductRepo.save(entities);
   }
 
   async update(

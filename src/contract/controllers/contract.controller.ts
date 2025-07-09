@@ -23,7 +23,7 @@ export class ContractController {
 
   @Post()
   async create(@Body() dto: CreateContractWithProductsDTO) {
-    const { /*products,*/ vendorId, customerId, ...contractData } = dto;
+    const { products, vendorId, customerId, ...contractData } = dto;
 
     const contract = await this.contractService.create({
       ...contractData,
@@ -31,13 +31,13 @@ export class ContractController {
       customerId,
     });
 
-    // const contractProducts = products.map((p) => ({
-    //   contractId: contract.id,
-    //   productId: p.productId,
-    //   quantity: p.quantity,
-    // }));
+    const contractProducts = products.map((p) => ({
+      contractId: contract.id,
+      productId: p.productId,
+      quantity: p.quantity,
+    }));
 
-    // await this.contraProducService.create(contractProducts);
+    await this.contraProducService.create(contractProducts);
 
     return this.contractService.findOne(contract.id);
   }
