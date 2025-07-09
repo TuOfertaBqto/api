@@ -19,6 +19,9 @@ export class ContractProduct extends BaseModel {
   @JoinColumn({ name: 'product_id' })
   product: Product;
 
+  @Column({ type: 'int', name: 'quantity', default: 0 })
+  quantity: number;
+
   @Column({ type: 'timestamp', name: 'delivery_date', nullable: true })
   deliveryDate: Date;
 
