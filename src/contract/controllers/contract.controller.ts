@@ -8,15 +8,38 @@ import {
   Post,
 } from '@nestjs/common';
 import { ContractService } from '../services/contract.service';
-import { CreateContractDTO, UpdateContractDTO } from '../dto/contract.dto';
+import {
+  CreateContractWithProductsDTO,
+  UpdateContractDTO,
+} from '../dto/contract.dto';
+import { ContractProductService } from '../services/contract-product.service';
 
 @Controller('contract')
 export class ContractController {
-  constructor(private readonly contractService: ContractService) {}
+  constructor(
+    private readonly contractService: ContractService,
+    private readonly contraProducService: ContractProductService,
+  ) {}
 
   @Post()
-  create(@Body() dto: CreateContractDTO) {
-    return this.contractService.create(dto);
+  async create(@Body() dto: CreateContractWithProductsDTO) {
+    const { /*products,*/ vendorId, customerId, ...contractData } = dto;
+
+    const contract = await this.contractService.create({
+      ...contractData,
+      vendorId,
+      customerId,
+    });
+
+    // const contractProducts = products.map((p) => ({
+    //   contractId: contract.id,
+    //   productId: p.productId,
+    //   quantity: p.quantity,
+    // }));
+
+    // await this.contraProducService.create(contractProducts);
+
+    return this.contractService.findOne(contract.id);
   }
 
   @Get()
