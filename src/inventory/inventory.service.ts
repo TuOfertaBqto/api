@@ -24,7 +24,7 @@ export class InventoryService {
       relations: ['product'],
     });
 
-    if (!item) throw new NotFoundException('Inventory item not found');
+    if (!item) throw new NotFoundException(`Inventory #${id} not found`);
     return item;
   }
 
