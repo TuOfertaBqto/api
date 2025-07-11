@@ -35,6 +35,7 @@ export class ContractController {
       contractId: contract.id,
       productId: p.productId,
       quantity: p.quantity,
+      status: p.status,
     }));
 
     await this.contraProducService.create(contractProducts);

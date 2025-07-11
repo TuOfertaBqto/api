@@ -13,6 +13,7 @@ import { Agreement } from '../entities/contract.entity';
 import { IntersectionType, PartialType } from '@nestjs/mapped-types';
 import { BaseDTO } from 'src/utils/dto/base.dto';
 import { Type } from 'class-transformer';
+import { ContractProductStatus } from '../entities/contract-product.entity';
 
 class ContractProductDTO {
   @IsString()
@@ -20,6 +21,9 @@ class ContractProductDTO {
 
   @IsInt()
   quantity: number;
+
+  @IsEnum(ContractProductStatus)
+  status: ContractProductStatus;
 }
 
 export class CreateContractDTO {

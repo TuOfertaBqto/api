@@ -54,6 +54,7 @@ export class ContractProductService {
         contract: { id: p.contractId },
         product: { id: p.productId },
         quantity: p.quantity,
+        status: p.status,
       }),
     );
 
