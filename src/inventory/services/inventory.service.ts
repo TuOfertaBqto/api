@@ -28,6 +28,17 @@ export class InventoryService {
     return item;
   }
 
+  async getStockByProduct(productId: string): Promise<number> {
+    const record = await this.inventoryRepo.findOne({
+      where: {
+        product: { id: productId },
+      },
+      relations: ['product'],
+    });
+
+    return record?.stockQuantity ?? 0;
+  }
+
   async create(dto: CreateInventoryDTO): Promise<Inventory> {
     const product = await this.productService.findOne(dto.productId);
 

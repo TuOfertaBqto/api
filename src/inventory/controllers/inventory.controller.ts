@@ -24,6 +24,12 @@ export class InventoryController {
     return this.inventoryService.findOne(id);
   }
 
+  @Get('stock/:productId')
+  async getStock(@Param('productId') productId: string) {
+    const stock = await this.inventoryService.getStockByProduct(productId);
+    return { stock };
+  }
+
   @Post()
   create(@Body() dto: CreateInventoryDTO) {
     return this.inventoryService.create(dto);
