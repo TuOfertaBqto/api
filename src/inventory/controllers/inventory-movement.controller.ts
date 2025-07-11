@@ -1,8 +1,8 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { InventoryMovementService } from './inventory-movement.service';
-import { CreateInventoryMovementDTO } from './dto/inventory-movement.dto';
+import { InventoryMovementService } from '../services/inventory-movement.service';
+import { CreateInventoryMovementDTO } from '../dto/inventory-movement.dto';
 
-@Controller('inventory-movements')
+@Controller('inventory-movement')
 export class InventoryMovementController {
   constructor(private readonly service: InventoryMovementService) {}
 

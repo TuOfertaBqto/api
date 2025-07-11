@@ -3,9 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import {
   InventoryMovement,
   MovementType,
-} from './entities/inventory-movement.entity';
+} from '../entities/inventory-movement.entity';
 import { Repository } from 'typeorm';
-import { CreateInventoryMovementDTO } from './dto/inventory-movement.dto';
+import { CreateInventoryMovementDTO } from '../dto/inventory-movement.dto';
 import { InventoryService } from './inventory.service';
 
 @Injectable()
