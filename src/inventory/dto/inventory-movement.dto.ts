@@ -4,7 +4,7 @@ import { PartialType } from '@nestjs/mapped-types';
 
 export class CreateInventoryMovementDTO {
   @IsUUID()
-  inventoryId: string;
+  productId: string;
 
   @IsEnum(MovementType)
   type: MovementType;

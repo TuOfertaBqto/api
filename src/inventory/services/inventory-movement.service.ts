@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { InventoryMovement } from '../entities/inventory-movement.entity';
 import { Repository } from 'typeorm';
 import { CreateInventoryMovementDTO } from '../dto/inventory-movement.dto';
-import { InventoryService } from './inventory.service';
+import { ProductService } from 'src/product/product.service';
 
 @Injectable()
 export class InventoryMovementService {
@@ -11,28 +11,28 @@ export class InventoryMovementService {
     @InjectRepository(InventoryMovement)
     private readonly movementRepo: Repository<InventoryMovement>,
 
-    private readonly inventoryService: InventoryService,
+    private readonly productService: ProductService,
   ) {}
 
   async create(dto: CreateInventoryMovementDTO): Promise<InventoryMovement> {
-    const inventory = await this.inventoryService.findOne(dto.inventoryId);
+    const product = await this.productService.findOne(dto.productId);
 
     const movement = this.movementRepo.create({
       ...dto,
-      inventory,
+      product,
     });
 
     return this.movementRepo.save(movement);
   }
 
   async findAll(): Promise<InventoryMovement[]> {
-    return this.movementRepo.find({ relations: ['inventory'] });
+    return this.movementRepo.find({ relations: ['product'] });
   }
 
   async findOne(id: string): Promise<InventoryMovement> {
     const movement = await this.movementRepo.findOne({
       where: { id },
-      relations: ['inventory'],
+      relations: ['product'],
     });
 
     if (!movement) throw new NotFoundException(`Movement #${id} not found`);
