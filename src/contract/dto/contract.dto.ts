@@ -1,13 +1,26 @@
 import {
+  IsArray,
   IsDateString,
   IsEnum,
+  IsInt,
   IsNumber,
   IsOptional,
+  IsString,
   IsUUID,
+  ValidateNested,
 } from 'class-validator';
 import { Agreement } from '../entities/contract.entity';
 import { IntersectionType, PartialType } from '@nestjs/mapped-types';
 import { BaseDTO } from 'src/utils/dto/base.dto';
+import { Type } from 'class-transformer';
+
+class ContractProductDTO {
+  @IsString()
+  productId: string;
+
+  @IsInt()
+  quantity: number;
+}
 
 export class CreateContractDTO {
   @IsUUID()
@@ -35,6 +48,13 @@ export class CreateContractDTO {
 
   @IsNumber()
   totalPrice: number;
+}
+
+export class CreateContractWithProductsDTO extends CreateContractDTO {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ContractProductDTO)
+  products: ContractProductDTO[];
 }
 
 export class UpdateContractDTO extends PartialType(CreateContractDTO) {}

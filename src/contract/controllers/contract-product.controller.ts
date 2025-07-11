@@ -28,7 +28,7 @@ export class ContractProductController {
   }
 
   @Post()
-  create(@Body() dto: CreateContractProductDTO) {
+  create(@Body() dto: CreateContractProductDTO[]) {
     return this.service.create(dto);
   }
 
