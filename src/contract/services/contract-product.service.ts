@@ -1,6 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ContractProduct } from '../entities/contract-product.entity';
+import {
+  ContractProduct,
+  ContractProductStatus,
+} from '../entities/contract-product.entity';
 import { Repository } from 'typeorm';
 import {
   CreateContractProductDTO,
@@ -29,6 +32,20 @@ export class ContractProductService {
     });
     if (!item) throw new NotFoundException(`ContractProduct #${id} not found`);
     return item;
+  }
+
+  async getToDispatchQuantity(productId: string): Promise<number> {
+    const result: { total: string | null } | undefined =
+      await this.contractProductRepo
+        .createQueryBuilder('cp')
+        .select('SUM(cp.quantity)', 'total')
+        .where('cp.product = :productId', { productId })
+        .andWhere('cp.status = :status', {
+          status: ContractProductStatus.TO_DISPATCH,
+        })
+        .getRawOne();
+
+    return Number(result?.total ?? 0);
   }
 
   async create(dto: CreateContractProductDTO[]): Promise<ContractProduct[]> {

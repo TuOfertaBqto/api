@@ -27,6 +27,12 @@ export class ContractProductController {
     return this.service.findOne(id);
   }
 
+  @Get('to-dispatch/:productId')
+  async getToDispatchQuantity(@Param('productId') productId: string) {
+    const total = await this.service.getToDispatchQuantity(productId);
+    return { toDispatchQuantity: total };
+  }
+
   @Post()
   create(@Body() dto: CreateContractProductDTO[]) {
     return this.service.create(dto);
