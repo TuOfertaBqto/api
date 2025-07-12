@@ -28,6 +28,18 @@ export class InventoryService {
     return item;
   }
 
+  async findOneByProduct(id: string): Promise<Inventory> {
+    const inventory = await this.inventoryRepo.findOne({
+      where: { product: { id } },
+    });
+
+    if (!inventory) {
+      throw new NotFoundException('Inventario del producto no encontrado');
+    }
+
+    return inventory;
+  }
+
   async getStockByProduct(productId: string): Promise<number> {
     const record = await this.inventoryRepo.findOne({
       where: {
