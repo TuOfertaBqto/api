@@ -9,28 +9,43 @@ import {
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { CreateProductDTO, UpdateProductDTO } from './dto/product.dto';
+import { InventoryService } from 'src/inventory/services/inventory.service';
+import { Product } from './entities/product.entity';
 
 @Controller('product')
 export class ProductController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(
+    private readonly productService: ProductService,
+    private readonly inventoryService: InventoryService,
+  ) {}
 
   @Post()
-  create(@Body() createProductDto: CreateProductDTO) {
-    return this.productService.create(createProductDto);
+  async create(@Body() createProductDto: CreateProductDTO): Promise<Product> {
+    const product = await this.productService.create(createProductDto);
+
+    await this.inventoryService.create({
+      productId: product.id,
+      stockQuantity: 0,
+    });
+
+    return product;
   }
 
   @Get()
-  findAll() {
+  findAll(): Promise<Product[]> {
     return this.productService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string): Promise<Product> {
     return this.productService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateProductDto: UpdateProductDTO) {
+  update(
+    @Param('id') id: string,
+    @Body() updateProductDto: UpdateProductDTO,
+  ): Promise<Product> {
     return this.productService.update(id, updateProductDto);
   }
 
