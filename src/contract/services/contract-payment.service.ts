@@ -68,14 +68,13 @@ export class ContractPaymentService {
     dto: UpdateContractPaymentDTO,
   ): Promise<ContractPayment> {
     const payment = await this.findOne(id);
-    if (!dto.contract?.id) {
-      throw new NotFoundException(
-        'contractId is required for updating payment',
-      );
-    }
-    const contract = await this.contractService.findOne(dto.contract.id);
 
-    Object.assign(payment, { ...dto, contract });
+    if (dto.contract?.id) {
+      const contract = await this.contractService.findOne(dto.contract.id);
+      payment.contract = contract;
+    }
+
+    Object.assign(payment, { ...dto });
 
     return this.repo.save(payment);
   }
