@@ -6,14 +6,17 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  ValidateNested,
 } from 'class-validator';
 import { PaymentMethod } from '../entities/contract-payment.entity';
 import { PartialType } from '@nestjs/mapped-types';
-import { Agreement } from '../entities/contract.entity';
+import { Agreement, Contract } from '../entities/contract.entity';
+import { Type } from 'class-transformer';
 
 export class CreateContractPaymentDTO {
-  @IsUUID()
-  contractId: string;
+  @ValidateNested()
+  @Type(() => Contract)
+  contract: { id: string };
 
   @IsEnum(PaymentMethod)
   @IsOptional()

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ContractPayment } from '../entities/contract-payment.entity';
-import { Repository } from 'typeorm';
+import { Brackets, Repository } from 'typeorm';
 import { ContractService } from './contract.service';
 import {
   CreateContractPaymentDTO,
@@ -16,17 +16,6 @@ export class ContractPaymentService {
     private readonly contractService: ContractService,
   ) {}
 
-  async create(dto: CreateContractPaymentDTO): Promise<ContractPayment> {
-    const contract = await this.contractService.findOne(dto.contractId);
-
-    const payment = this.repo.create({
-      ...dto,
-      contract,
-    });
-
-    return this.repo.save(payment);
-  }
-
   async createMany(
     data: CreateContractPaymentDTO[],
   ): Promise<ContractPayment[]> {
@@ -35,7 +24,30 @@ export class ContractPaymentService {
   }
 
   async findAll(): Promise<ContractPayment[]> {
-    return this.repo.find({ relations: ['contract'] });
+    const subQuery = this.repo
+      .createQueryBuilder('sub_cp')
+      .select('MIN(sub_cp.due_date)', 'minDate')
+      .where('sub_cp.contract_id = cp.contract_id')
+      .andWhere('sub_cp.paid_at IS NULL')
+      .andWhere('sub_cp.due_date >= CURRENT_DATE');
+
+    return this.repo
+      .createQueryBuilder('cp')
+      .innerJoinAndSelect('cp.contract', 'contract')
+      .where(
+        new Brackets((qb) => {
+          qb.where('cp.paid_at IS NULL').andWhere(
+            `cp.due_date = (${subQuery.getQuery()})`,
+          );
+        }),
+      )
+      .orWhere(
+        new Brackets((qb) => {
+          qb.where('cp.paid_at IS NULL').andWhere('cp.due_date < CURRENT_DATE');
+        }),
+      )
+      .orderBy('cp.due_date', 'ASC')
+      .getMany();
   }
 
   async findOne(id: string): Promise<ContractPayment> {
@@ -56,12 +68,12 @@ export class ContractPaymentService {
     dto: UpdateContractPaymentDTO,
   ): Promise<ContractPayment> {
     const payment = await this.findOne(id);
-    if (!dto.contractId) {
+    if (!dto.contract?.id) {
       throw new NotFoundException(
         'contractId is required for updating payment',
       );
     }
-    const contract = await this.contractService.findOne(dto.contractId);
+    const contract = await this.contractService.findOne(dto.contract.id);
 
     Object.assign(payment, { ...dto, contract });
 

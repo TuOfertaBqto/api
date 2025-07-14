@@ -54,7 +54,7 @@ export function generatePayments(
     dueDate.setDate(startDate.getDate() + i * intervalDays);
 
     payments.push({
-      contractId,
+      contract: { id: contractId },
       dueDate: dueDate.toISOString(),
     });
   }
