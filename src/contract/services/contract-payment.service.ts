@@ -27,6 +27,13 @@ export class ContractPaymentService {
     return this.repo.save(payment);
   }
 
+  async createMany(
+    data: CreateContractPaymentDTO[],
+  ): Promise<ContractPayment[]> {
+    const payments = this.repo.create(data);
+    return this.repo.save(payments);
+  }
+
   async findAll(): Promise<ContractPayment[]> {
     return this.repo.find({ relations: ['contract'] });
   }

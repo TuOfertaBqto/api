@@ -9,17 +9,30 @@ import {
 } from '@nestjs/common';
 import { ContractPaymentService } from '../services/contract-payment.service';
 import {
-  CreateContractPaymentDTO,
+  CreateListContractPaymentDTO,
   UpdateContractPaymentDTO,
 } from '../dto/contract-payment.dto';
+import {
+  generatePayments,
+  getNextSaturday,
+} from 'src/utils/create-contract-payment';
 
 @Controller('contract-payment')
 export class ContractPaymentController {
   constructor(private readonly service: ContractPaymentService) {}
 
   @Post()
-  create(@Body() dto: CreateContractPaymentDTO) {
-    return this.service.create(dto);
+  create(@Body() dto: CreateListContractPaymentDTO) {
+    const firstDueDate = getNextSaturday(dto.startContract);
+    const payments = generatePayments(
+      dto.contractId,
+      dto.totalPriceContract,
+      dto.installmentAmountContract,
+      dto.agreementContract,
+      firstDueDate,
+    );
+
+    return this.service.createMany(payments);
   }
 
   @Get()
