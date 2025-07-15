@@ -7,6 +7,7 @@ import {
   CreateContractPaymentDTO,
   UpdateContractPaymentDTO,
 } from '../dto/contract-payment.dto';
+import { Agreement } from '../entities/contract.entity';
 
 @Injectable()
 export class ContractPaymentService {
@@ -80,8 +81,22 @@ export class ContractPaymentService {
       nextPayment.debt = (nextPayment.debt ?? 0) + debt;
       await this.repo.save(nextPayment);
     } else {
-      // Opcional: podrías lanzar un warning o registrar que no hay siguiente cuota
-      console.warn('No next unpaid installment found to pass remaining debt.');
+      const contract = await this.contractService.findOne(
+        currentPayment.contract.id,
+      );
+
+      const intervalDays = contract.agreement === Agreement.WEEKLY ? 7 : 14;
+
+      const newDueDate = new Date(currentPayment.dueDate);
+      newDueDate.setDate(newDueDate.getDate() + intervalDays);
+
+      const newPayment = this.repo.create({
+        contract: { id: contract.id },
+        dueDate: newDueDate,
+        debt,
+      });
+
+      await this.repo.save(newPayment);
     }
   }
 
