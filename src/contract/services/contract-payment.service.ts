@@ -100,6 +100,25 @@ export class ContractPaymentService {
     }
   }
 
+  async markAllRemainingAsPaid(contractId: string): Promise<void> {
+    const remainingPayments = await this.repo.find({
+      where: {
+        contract: { id: contractId },
+        paidAt: IsNull(),
+      },
+    });
+
+    const now = new Date();
+
+    for (const payment of remainingPayments) {
+      payment.paidAt = now;
+      payment.amountPaid = payment.amountPaid ?? 0;
+      payment.debt = 0;
+    }
+
+    await this.repo.save(remainingPayments);
+  }
+
   async update(
     payment: ContractPayment,
     dto: UpdateContractPaymentDTO,

@@ -16,10 +16,14 @@ import {
   generatePayments,
   getNextSaturday,
 } from 'src/utils/create-contract-payment';
+import { ContractService } from '../services/contract.service';
 
 @Controller('contract-payment')
 export class ContractPaymentController {
-  constructor(private readonly service: ContractPaymentService) {}
+  constructor(
+    private readonly service: ContractPaymentService,
+    private readonly contractService: ContractService,
+  ) {}
 
   @Post()
   create(@Body() dto: CreateListContractPaymentDTO) {
@@ -59,6 +63,11 @@ export class ContractPaymentController {
 
     if (updated.debt > 0) {
       await this.service.passDebtToNextInstallment(payment, updated.debt);
+    } else if (updated.debt === 0) {
+      await this.service.markAllRemainingAsPaid(updated.contract.id);
+      await this.contractService.update(payment.contract.id, {
+        endDate: new Date(),
+      });
     }
 
     return updated;
