@@ -49,6 +49,11 @@ export class ContractPaymentController {
     return this.service.findOne(id);
   }
 
+  @Get('contract/:contractId')
+  async findByContract(@Param('contractId') contractId: string) {
+    return this.service.findByContract(contractId);
+  }
+
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateContractPaymentDTO) {
     const payment = await this.service.findOne(id);

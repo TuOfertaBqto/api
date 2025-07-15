@@ -64,6 +64,13 @@ export class ContractPaymentService {
     return payment;
   }
 
+  async findByContract(contractId: string): Promise<ContractPayment[]> {
+    return this.repo.find({
+      where: { contract: { id: contractId } },
+      order: { dueDate: 'ASC' },
+    });
+  }
+
   async passDebtToNextInstallment(
     currentPayment: ContractPayment,
     debt: number,
