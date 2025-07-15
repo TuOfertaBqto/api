@@ -46,8 +46,16 @@ export class ContractPaymentController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateContractPaymentDTO) {
-    return this.service.update(id, dto);
+  async update(@Param('id') id: string, @Body() dto: UpdateContractPaymentDTO) {
+    const payment = await this.service.findOne(id);
+    if (
+      typeof dto.amountPaid === 'number' &&
+      typeof payment.debt === 'number'
+    ) {
+      dto.debt = Math.max(payment.debt - dto.amountPaid, 0);
+    }
+
+    return this.service.update(payment, dto);
   }
 
   @Delete(':id')

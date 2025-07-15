@@ -64,11 +64,9 @@ export class ContractPaymentService {
   }
 
   async update(
-    id: string,
+    payment: ContractPayment,
     dto: UpdateContractPaymentDTO,
   ): Promise<ContractPayment> {
-    const payment = await this.findOne(id);
-
     if (dto.contract?.id) {
       const contract = await this.contractService.findOne(dto.contract.id);
       payment.contract = contract;
