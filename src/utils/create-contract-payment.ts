@@ -14,28 +14,6 @@ export function getNextSaturday(fromDate: string | Date): Date {
   return date;
 }
 
-// export function generatePayments(
-//   contractId: string,
-//   installmentAmount: number,
-//   agreement: 'weekly' | 'fortnightly',
-//   startDate: Date,
-// ): CreateContractPaymentDTO[] {
-//   const payments: CreateContractPaymentDTO[] = [];
-//   const intervalDays = agreement === 'weekly' ? 7 : 14;
-
-//   for (let i = 0; i < installmentAmount; i++) {
-//     const dueDate = new Date(startDate);
-//     dueDate.setDate(startDate.getDate() + i * intervalDays);
-
-//     payments.push({
-//       contractId,
-//       dueDate: dueDate.toISOString(),
-//     });
-//   }
-
-//   return payments;
-// }
-
 export function generatePayments(
   contractId: string,
   totalPrice: number,
@@ -56,6 +34,7 @@ export function generatePayments(
     payments.push({
       contract: { id: contractId },
       dueDate: dueDate.toISOString(),
+      debt: i === 0 ? totalPrice : undefined,
     });
   }
 

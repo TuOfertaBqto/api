@@ -44,6 +44,10 @@ export class CreateContractPaymentDTO {
   @IsOptional()
   @IsDateString()
   paidAt?: string;
+
+  @IsOptional()
+  @IsNumber()
+  debt?: number;
 }
 
 export class CreateListContractPaymentDTO {
