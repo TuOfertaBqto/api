@@ -67,6 +67,7 @@ export class ContractPaymentService {
   async findByContract(contractId: string): Promise<ContractPayment[]> {
     return this.repo.find({
       where: { contract: { id: contractId } },
+      relations: ['contract'],
       order: { dueDate: 'ASC' },
     });
   }
