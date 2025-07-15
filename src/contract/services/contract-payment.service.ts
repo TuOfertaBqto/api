@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ContractPayment } from '../entities/contract-payment.entity';
-import { Brackets, Repository } from 'typeorm';
+import { Brackets, IsNull, MoreThan, Repository } from 'typeorm';
 import { ContractService } from './contract.service';
 import {
   CreateContractPaymentDTO,
@@ -61,6 +61,28 @@ export class ContractPaymentService {
     }
 
     return payment;
+  }
+
+  async passDebtToNextInstallment(
+    currentPayment: ContractPayment,
+    debt: number,
+  ): Promise<void> {
+    const nextPayment = await this.repo.findOne({
+      where: {
+        contract: { id: currentPayment.contract.id },
+        paidAt: IsNull(),
+        dueDate: MoreThan(currentPayment.dueDate),
+      },
+      order: { dueDate: 'ASC' },
+    });
+
+    if (nextPayment) {
+      nextPayment.debt = (nextPayment.debt ?? 0) + debt;
+      await this.repo.save(nextPayment);
+    } else {
+      // Opcional: podrías lanzar un warning o registrar que no hay siguiente cuota
+      console.warn('No next unpaid installment found to pass remaining debt.');
+    }
   }
 
   async update(

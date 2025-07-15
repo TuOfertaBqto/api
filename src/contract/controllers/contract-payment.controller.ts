@@ -55,7 +55,13 @@ export class ContractPaymentController {
       dto.debt = Math.max(payment.debt - dto.amountPaid, 0);
     }
 
-    return this.service.update(payment, dto);
+    const updated = await this.service.update(payment, dto);
+
+    if (updated.debt > 0) {
+      await this.service.passDebtToNextInstallment(payment, updated.debt);
+    }
+
+    return updated;
   }
 
   @Delete(':id')
