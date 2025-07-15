@@ -46,4 +46,13 @@ export class ContractPayment extends BaseModel {
 
   @Column({ type: 'timestamp', name: 'paid_at', nullable: true })
   paidAt: Date;
+
+  @Column({
+    type: 'decimal',
+    name: 'debt',
+    precision: 10,
+    scale: 2,
+    nullable: true,
+  })
+  debt: number;
 }
