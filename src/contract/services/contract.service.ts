@@ -38,11 +38,33 @@ export class ContractService {
   }
 
   async findAll(): Promise<Contract[]> {
-    const contracts = await this.contractRepo.find({
-      relations: ['vendorId', 'customerId', 'products', 'products.product'],
-    });
+    const contracts = await this.contractRepo
+      .createQueryBuilder('contract')
+      .leftJoinAndSelect('contract.vendorId', 'vendor')
+      .leftJoinAndSelect('contract.customerId', 'customer')
+      .leftJoinAndSelect('contract.products', 'contractProduct')
+      .leftJoinAndSelect('contractProduct.product', 'product')
+      .addSelect(
+        `
+      CASE
+        WHEN EXISTS (
+          SELECT 1 FROM contract_product cp
+          WHERE cp.contract_id = contract.id AND cp.status = 'to_buy'
+        ) THEN 1
+        WHEN EXISTS (
+          SELECT 1 FROM contract_product cp
+          WHERE cp.contract_id = contract.id AND cp.status = 'to_dispatch'
+        ) THEN 2
+        ELSE 3
+      END
+    `,
+        'priority',
+      )
+      .orderBy('priority', 'ASC')
+      .addOrderBy('contract.createdAt', 'DESC')
+      .getMany();
 
-    return instanceToPlain(contracts) as Contract[];
+    return contracts;
   }
 
   async findOne(id: string): Promise<Contract> {
