@@ -8,6 +8,7 @@ import {
 import { UserRole } from '../entities/user.entity';
 import { IntersectionType, PartialType } from '@nestjs/mapped-types';
 import { BaseDTO } from 'src/utils/dto/base.dto';
+import { Transform } from 'class-transformer';
 
 export class UserDTO {
   @IsString()
@@ -22,6 +23,7 @@ export class UserDTO {
   @IsString()
   documentId: string;
 
+  @Transform(({ value }: { value: string }) => value.trim().toLowerCase())
   @IsNotEmpty()
   @IsEmail()
   email: string;
