@@ -15,7 +15,11 @@ export class InventoryService {
   ) {}
 
   async findAll(): Promise<Inventory[]> {
-    return this.inventoryRepo.find({ relations: ['product'] });
+    return this.inventoryRepo
+      .createQueryBuilder('inventory')
+      .leftJoinAndSelect('inventory.product', 'product')
+      .orderBy('product.name', 'ASC')
+      .getMany();
   }
 
   async findOne(id: string): Promise<Inventory> {
