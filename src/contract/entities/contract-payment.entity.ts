@@ -4,6 +4,8 @@ import { Contract } from './contract.entity';
 
 export enum PaymentMethod {
   ZELLE = 'zelle',
+  PAYPAL = 'paypal',
+  BINANCE = 'binance',
   MOBILE_PAYMENT = 'mobile_payment',
   BANK_TRANSFER = 'bank_transfer',
   CASH = 'cash',
