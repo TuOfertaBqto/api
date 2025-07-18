@@ -16,10 +16,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
         database: configService.get('POSTGRES_NAME'),
         entities: [__dirname + '/../**/*.entity{.ts,.js}'],
         synchronize: false,
-        ssl: false,
-        //{
-        //   rejectUnauthorized: false,
-        // },
+        ssl:
+          configService.get<string>('NODE_ENV') === 'development'
+            ? false
+            : {
+                rejectUnauthorized: false,
+              },
       }),
       inject: [ConfigService],
     }),
