@@ -7,7 +7,6 @@ import {
   CreateContractPaymentDTO,
   UpdateContractPaymentDTO,
 } from '../dto/contract-payment.dto';
-import { Agreement } from '../entities/contract.entity';
 
 @Injectable()
 export class ContractPaymentService {
@@ -75,7 +74,7 @@ export class ContractPaymentService {
   async passDebtToNextInstallment(
     currentPayment: ContractPayment,
     debt: number,
-  ): Promise<void> {
+  ): Promise<ContractPayment> {
     const nextPayment = await this.repo.findOne({
       where: {
         contract: { id: currentPayment.contract.id },
@@ -85,46 +84,10 @@ export class ContractPaymentService {
       order: { dueDate: 'ASC' },
     });
 
-    if (nextPayment) {
-      nextPayment.debt = (nextPayment.debt ?? 0) + debt;
-      await this.repo.save(nextPayment);
-    } else {
-      const contract = await this.contractService.findOne(
-        currentPayment.contract.id,
-      );
+    if (!nextPayment) throw new NotFoundException(`Payment with not found`);
 
-      const intervalDays = contract.agreement === Agreement.WEEKLY ? 7 : 14;
-
-      const newDueDate = new Date(currentPayment.dueDate);
-      newDueDate.setDate(newDueDate.getDate() + intervalDays);
-
-      const newPayment = this.repo.create({
-        contract: { id: contract.id },
-        dueDate: newDueDate,
-        debt,
-      });
-
-      await this.repo.save(newPayment);
-    }
-  }
-
-  async markAllRemainingAsPaid(contractId: string): Promise<void> {
-    const remainingPayments = await this.repo.find({
-      where: {
-        contract: { id: contractId },
-        paidAt: IsNull(),
-      },
-    });
-
-    const now = new Date();
-
-    for (const payment of remainingPayments) {
-      payment.paidAt = now;
-      payment.amountPaid = payment.amountPaid ?? 0;
-      payment.debt = 0;
-    }
-
-    await this.repo.save(remainingPayments);
+    nextPayment.debt = (nextPayment.debt ?? 0) + debt;
+    return await this.repo.save(nextPayment);
   }
 
   async update(

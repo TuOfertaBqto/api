@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -56,29 +57,51 @@ export class ContractPaymentController {
 
   @Patch(':id')
   async update(@Param('id') id: string, @Body() dto: UpdateContractPaymentDTO) {
+    if (!dto.amountPaid || dto.amountPaid <= 0) {
+      throw new BadRequestException('El monto pagado debe ser mayor a 0');
+    }
     const payment = await this.service.findOne(id);
 
-    if (
-      typeof dto.amountPaid === 'number' &&
-      payment.debt !== null &&
-      payment.debt !== undefined
-    ) {
-      const currentDebt = parseFloat(payment.debt.toString());
-      dto.debt = Math.max(currentDebt - dto.amountPaid, 0);
-    }
+    let paymentId = payment.id;
+    let remainingAmount =
+      parseFloat(payment.amountPaid?.toString() ?? 0) + dto.amountPaid;
+    const installmentAmount = payment.contract.installmentAmount;
 
-    const updated = await this.service.update(payment, dto);
+    while (remainingAmount > 0) {
+      const installment = await this.service.findOne(paymentId);
+      const amountToPay = Math.min(installmentAmount, remainingAmount); // posiblemebte luego poner el monto que se debe
 
-    if (updated.debt > 0) {
-      await this.service.passDebtToNextInstallment(payment, updated.debt);
-    } else if (updated.debt === 0) {
-      await this.service.markAllRemainingAsPaid(updated.contract.id);
-      await this.contractService.update(payment.contract.id, {
-        endDate: new Date(),
+      const newDebt =
+        installment.debt -
+        amountToPay +
+        parseFloat(payment.amountPaid?.toString() ?? 0);
+
+      await this.service.update(installment, {
+        amountPaid: amountToPay,
+        debt: newDebt,
+        paymentMethod: dto.paymentMethod,
+        paidAt:
+          newDebt === 0 || amountToPay === installmentAmount
+            ? dto.paidAt
+            : undefined,
       });
-    }
+      remainingAmount -= amountToPay;
 
-    return updated;
+      if (newDebt > 0) {
+        if (amountToPay === installmentAmount) {
+          const next = await this.service.passDebtToNextInstallment(
+            installment,
+            newDebt,
+          );
+          paymentId = next.id;
+        }
+      } else {
+        await this.contractService.update(payment.contract.id, {
+          endDate: new Date(),
+        });
+      }
+    }
+    return { message: 'Pago procesado exitosamente' };
   }
 
   @Delete(':id')

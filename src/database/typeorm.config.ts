@@ -14,9 +14,10 @@ export default new DataSource({
   database: configService.get('POSTGRES_NAME'),
   entities: [__dirname + '/../**/*.entity{.ts,.js}'],
   synchronize: false,
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  ssl: false,
+  // {
+  //   rejectUnauthorized: false,
+  // },
   migrations: ['src/**/migrations/*-migration.ts'],
   migrationsRun: false,
   logging: true,
