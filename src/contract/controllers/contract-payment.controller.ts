@@ -80,6 +80,8 @@ export class ContractPaymentController {
         amountPaid: amountToPay,
         debt: newDebt,
         paymentMethod: dto.paymentMethod,
+        referenceNumber: dto.referenceNumber,
+        owner: dto.owner,
         paidAt:
           newDebt === 0 || amountToPay === installmentAmount
             ? dto.paidAt
