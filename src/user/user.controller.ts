@@ -35,9 +35,9 @@ export class UserController {
         createUserDto.role,
       )
     ) {
-      const defaultPassword = this.configService.get<string>(
-        'DEFAULT_ADMIN_PASSWORD',
-      );
+      const defaultPassword =
+        createUserDto.password ||
+        this.configService.get<string>('DEFAULT_ADMIN_PASSWORD');
       if (!defaultPassword) {
         throw new HttpException(
           'Password is required for admin users or must be set in env',

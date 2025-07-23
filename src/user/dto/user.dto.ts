@@ -33,7 +33,6 @@ export class UserDTO {
   phoneNumber: string;
 
   @IsString()
-  @IsOptional()
   adress: string;
 
   @IsOptional()
