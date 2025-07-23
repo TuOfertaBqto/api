@@ -16,7 +16,6 @@ import { CreateUserDTO, ResponseUserDTO, UpdateUserDTO } from './dto/user.dto';
 import { UserRole } from './entities/user.entity';
 import { instanceToPlain } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
-import { Auth } from 'src/auth/decorators/auth.decorator';
 
 @Controller('user')
 export class UserController {
@@ -54,7 +53,6 @@ export class UserController {
   }
 
   @Get()
-  @Auth(UserRole.MAIN)
   async findAll(@Query('role') role?: UserRole) {
     const users = await this.userService.findAll(role);
     return users.map((user) => instanceToPlain(user));
