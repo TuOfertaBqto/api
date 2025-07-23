@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, UserRole } from './entities/user.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { ResponseUserDTO, UpdateUserDTO, UserDTO } from './dto/user.dto';
 
 @Injectable()
@@ -35,12 +35,21 @@ export class UserService {
   }
 
   async findAll(role?: UserRole): Promise<ResponseUserDTO[]> {
-    const where = role ? { role } : {};
-    const users = await this.userRepository.find({
-      where,
-    });
+    let users;
 
-    return users;
+    if (role === UserRole.VENDOR) {
+      users = await this.userRepository.find({
+        where: [{ role: UserRole.VENDOR }, { code: Not(IsNull()) }],
+      });
+    } else if (role) {
+      users = await this.userRepository.find({
+        where: { role },
+      });
+    } else {
+      users = await this.userRepository.find();
+    }
+
+    return users as ResponseUserDTO[];
   }
 
   async findOne(id: string): Promise<User> {
