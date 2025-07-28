@@ -7,6 +7,7 @@ import {
   CreateContractPaymentDTO,
   UpdateContractPaymentDTO,
 } from '../dto/contract-payment.dto';
+import { plainToInstance } from 'class-transformer';
 
 @Injectable()
 export class ContractPaymentService {
@@ -31,9 +32,11 @@ export class ContractPaymentService {
       .andWhere('sub_cp.paid_at IS NULL')
       .andWhere('sub_cp.due_date >= CURRENT_DATE');
 
-    return this.repo
+    const result = await this.repo
       .createQueryBuilder('cp')
       .innerJoinAndSelect('cp.contract', 'contract')
+      .leftJoinAndSelect('contract.vendorId', 'vendor')
+      .leftJoinAndSelect('contract.customerId', 'customer')
       .where(
         new Brackets((qb) => {
           qb.where('cp.paid_at IS NULL').andWhere(
@@ -48,6 +51,10 @@ export class ContractPaymentService {
       )
       .orderBy('cp.due_date', 'ASC')
       .getMany();
+
+    return plainToInstance(ContractPayment, result, {
+      excludeExtraneousValues: false,
+    });
   }
 
   async findOne(id: string): Promise<ContractPayment> {
