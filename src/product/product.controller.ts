@@ -50,7 +50,8 @@ export class ProductController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string) {
+    await this.inventoryService.removeByProductId(id);
     return this.productService.remove(id);
   }
 }

@@ -74,4 +74,12 @@ export class InventoryService {
   async remove(id: string): Promise<void> {
     await this.inventoryRepo.softDelete(id);
   }
+
+  async removeByProductId(productId: string): Promise<void> {
+    await this.inventoryRepo
+      .createQueryBuilder()
+      .softDelete()
+      .where('product_id = :productId', { productId })
+      .execute();
+  }
 }
