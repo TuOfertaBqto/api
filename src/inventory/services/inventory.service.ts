@@ -71,6 +71,16 @@ export class InventoryService {
     return this.findOne(id);
   }
 
+  async updateStockByProductId(id: string, stock: number): Promise<Inventory> {
+    const inventory = await this.findOneByProduct(id);
+
+    await this.inventoryRepo.update(inventory.id, {
+      stockQuantity: stock,
+    });
+
+    return this.findOne(inventory.id);
+  }
+
   async remove(id: string): Promise<void> {
     await this.inventoryRepo.softDelete(id);
   }

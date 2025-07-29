@@ -42,10 +42,20 @@ export class ProductController {
   }
 
   @Patch(':id')
-  update(
+  async update(
     @Param('id') id: string,
     @Body() updateProductDto: UpdateProductDTO,
   ): Promise<Product> {
+    if (
+      updateProductDto.stockQuantity !== undefined &&
+      updateProductDto.stockQuantity >= 0
+    ) {
+      await this.inventoryService.updateStockByProductId(
+        id,
+        updateProductDto.stockQuantity,
+      );
+      delete updateProductDto.stockQuantity;
+    }
     return this.productService.update(id, updateProductDto);
   }
 
