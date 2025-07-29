@@ -25,4 +25,8 @@ export class CreateProductDTO {
   categoryId: string;
 }
 
-export class UpdateProductDTO extends PartialType(CreateProductDTO) {}
+export class UpdateProductDTO extends PartialType(CreateProductDTO) {
+  @IsInt()
+  @IsOptional()
+  stockQuantity?: number;
+}
