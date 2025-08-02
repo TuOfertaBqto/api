@@ -45,7 +45,12 @@ export class Contract extends BaseModel {
   @Column({ type: 'int', name: 'total_price', default: 0 })
   totalPrice: number;
 
-  @Column({ type: 'enum', enum: ContractStatus, name: 'status' })
+  @Column({
+    type: 'enum',
+    enum: ContractStatus,
+    name: 'status',
+    default: ContractStatus.PENDING,
+  })
   status: ContractStatus;
 
   @OneToMany(() => ContractProduct, (cp) => cp.contract, { cascade: true })
