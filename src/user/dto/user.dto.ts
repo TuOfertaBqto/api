@@ -38,6 +38,10 @@ export class UserDTO {
   @IsOptional()
   @IsEnum(UserRole)
   role?: UserRole;
+
+  @IsString()
+  @IsOptional()
+  documentIdPhoto?: string;
 }
 
 export class CreateUserDTO extends UserDTO {
