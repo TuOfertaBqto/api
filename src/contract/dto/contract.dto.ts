@@ -9,7 +9,7 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { Agreement } from '../entities/contract.entity';
+import { Agreement, ContractStatus } from '../entities/contract.entity';
 import { IntersectionType, PartialType } from '@nestjs/mapped-types';
 import { BaseDTO } from 'src/utils/dto/base.dto';
 import { Type } from 'class-transformer';
@@ -52,6 +52,10 @@ export class CreateContractDTO {
 
   @IsNumber()
   totalPrice: number;
+
+  @IsOptional()
+  @IsEnum(ContractStatus)
+  status?: ContractStatus;
 }
 
 export class CreateContractWithProductsDTO extends CreateContractDTO {

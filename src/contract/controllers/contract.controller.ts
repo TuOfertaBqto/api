@@ -13,6 +13,10 @@ import {
   UpdateContractDTO,
 } from '../dto/contract.dto';
 import { ContractProductService } from '../services/contract-product.service';
+import { JwtPayloadDTO } from 'src/auth/dto/jwt.dto';
+import { ValidatedJwt } from 'src/auth/decorators/validated-jwt.decorator';
+import { UserRole } from 'src/user/entities/user.entity';
+import { ContractStatus } from '../entities/contract.entity';
 
 @Controller('contract')
 export class ContractController {
@@ -22,8 +26,19 @@ export class ContractController {
   ) {}
 
   @Post()
-  async create(@Body() dto: CreateContractWithProductsDTO) {
+  async create(
+    @ValidatedJwt() payload: JwtPayloadDTO,
+    @Body() dto: CreateContractWithProductsDTO,
+  ) {
     const { products, vendorId, customerId, ...contractData } = dto;
+
+    if (
+      [UserRole.MAIN, UserRole.SUPER_ADMIN, UserRole.ADMIN].includes(
+        payload.role,
+      )
+    ) {
+      contractData.status = ContractStatus.APPROVED;
+    }
 
     const contract = await this.contractService.create({
       ...contractData,
