@@ -16,22 +16,25 @@ export class ContractService {
   ) {}
 
   async create(dto: CreateContractDTO): Promise<Contract> {
-    const vendor = await this.userService.findOne(dto.vendorId);
-    const customer = await this.userService.findOne(dto.customerId);
+    const { vendorId, customerId, ...contractData } = dto;
 
-    if (!vendor || !customer) {
-      throw new NotFoundException('Vendor or customer not found');
+    const [vendor, customer] = await Promise.all([
+      this.userService.findOne(vendorId),
+      this.userService.findOne(customerId),
+    ]);
+
+    if (!vendor) {
+      throw new NotFoundException(`Vendor with ID ${vendorId} not found`);
+    }
+
+    if (!customer) {
+      throw new NotFoundException(`Customer with ID ${customerId} not found`);
     }
 
     const contract = this.contractRepo.create({
       vendorId: vendor,
       customerId: customer,
-      requestDate: dto.requestDate,
-      startDate: dto.startDate,
-      endDate: dto.endDate,
-      installmentAmount: dto.installmentAmount,
-      agreement: dto.agreement,
-      totalPrice: dto.totalPrice,
+      ...contractData,
     });
 
     return this.contractRepo.save(contract);
