@@ -44,4 +44,7 @@ export class User extends BaseModel {
 
   @Column({ type: 'enum', enum: UserRole, default: UserRole.CUSTOMER })
   role: UserRole;
+
+  @Column({ type: 'text', name: 'document_id_photo', nullable: true })
+  documentIdPhoto: string;
 }

@@ -8,6 +8,12 @@ export enum Agreement {
   FORTNIGHTLY = 'fortnightly',
 }
 
+export enum ContractStatus {
+  CANCELED = 'canceled',
+  PENDING = 'pending',
+  APPROVED = 'approved',
+}
+
 @Entity('contract')
 export class Contract extends BaseModel {
   @ManyToOne(() => User)
@@ -38,6 +44,14 @@ export class Contract extends BaseModel {
 
   @Column({ type: 'int', name: 'total_price', default: 0 })
   totalPrice: number;
+
+  @Column({
+    type: 'enum',
+    enum: ContractStatus,
+    name: 'status',
+    default: ContractStatus.PENDING,
+  })
+  status: ContractStatus;
 
   @OneToMany(() => ContractProduct, (cp) => cp.contract, { cascade: true })
   products: ContractProduct[];
