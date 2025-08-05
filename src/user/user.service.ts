@@ -34,7 +34,7 @@ export class UserService {
     return user;
   }
 
-  async findAll(role?: UserRole): Promise<ResponseUserDTO[]> {
+  async findAll(role?: UserRole): Promise<User[]> {
     let users;
 
     if (role === UserRole.VENDOR) {
@@ -49,7 +49,7 @@ export class UserService {
       users = await this.userRepository.find();
     }
 
-    return users as ResponseUserDTO[];
+    return users as User[];
   }
 
   async findOne(id: string): Promise<User> {
