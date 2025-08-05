@@ -29,7 +29,10 @@ export class UserController {
   ) {}
 
   @Post()
-  async create(@Body() createUserDto: CreateUserDTO): Promise<ResponseUserDTO> {
+  async create(
+    @ValidatedJwt() payload: JwtPayloadDTO,
+    @Body() createUserDto: CreateUserDTO,
+  ): Promise<ResponseUserDTO> {
     if (createUserDto.role && createUserDto.role === UserRole.VENDOR) {
       createUserDto.code = await this.userService.getNextAvailableCode();
     }
@@ -52,6 +55,13 @@ export class UserController {
     }
 
     const userSaved = await this.userService.create(createUserDto);
+
+    if (payload.role === UserRole.VENDOR) {
+      await this.vendorCustomerService.create({
+        vendorId: payload.sub,
+        customerId: userSaved.id,
+      });
+    }
 
     return instanceToPlain(userSaved) as ResponseUserDTO;
   }
