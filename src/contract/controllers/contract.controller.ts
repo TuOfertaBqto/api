@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -16,7 +17,7 @@ import { ContractProductService } from '../services/contract-product.service';
 import { JwtPayloadDTO } from 'src/auth/dto/jwt.dto';
 import { ValidatedJwt } from 'src/auth/decorators/validated-jwt.decorator';
 import { UserRole } from 'src/user/entities/user.entity';
-import { ContractStatus } from '../entities/contract.entity';
+import { Contract, ContractStatus } from '../entities/contract.entity';
 
 @Controller('contract')
 export class ContractController {
@@ -29,7 +30,8 @@ export class ContractController {
   async create(
     @ValidatedJwt() payload: JwtPayloadDTO,
     @Body() dto: CreateContractWithProductsDTO,
-  ) {
+  ): Promise<Contract> {
+    let contract: Contract;
     const { products, vendorId, customerId, ...contractData } = dto;
 
     if (
@@ -40,11 +42,19 @@ export class ContractController {
       contractData.status = ContractStatus.APPROVED;
     }
 
-    const contract = await this.contractService.create({
-      ...contractData,
-      vendorId,
-      customerId,
-    });
+    if (payload.role == UserRole.VENDOR) {
+      contract = await this.contractService.create({
+        ...contractData,
+        vendorId: payload.sub,
+        customerId,
+      });
+    } else {
+      contract = await this.contractService.create({
+        ...contractData,
+        vendorId,
+        customerId,
+      });
+    }
 
     const contractProducts = products.map((p) => ({
       contractId: contract.id,
@@ -61,6 +71,24 @@ export class ContractController {
   @Get()
   findAll() {
     return this.contractService.findAll();
+  }
+
+  @Get('request')
+  async findRequests(
+    @ValidatedJwt() payload: JwtPayloadDTO,
+  ): Promise<Contract[]> {
+    switch (payload.role) {
+      case UserRole.VENDOR:
+        return this.contractService.findAllRequests(payload.sub);
+
+      case UserRole.MAIN:
+        return this.contractService.findAllRequests();
+
+      default:
+        throw new ForbiddenException(
+          'No tienes permiso para ver las solicitudes',
+        );
+    }
   }
 
   @Get(':id')

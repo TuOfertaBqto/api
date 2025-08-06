@@ -28,7 +28,8 @@ class ContractProductDTO {
 
 export class CreateContractDTO {
   @IsUUID()
-  vendorId: string;
+  @IsOptional()
+  vendorId?: string;
 
   @IsUUID()
   customerId: string;

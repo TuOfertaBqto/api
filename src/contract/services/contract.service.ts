@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Contract } from '../entities/contract.entity';
+import { Contract, ContractStatus } from '../entities/contract.entity';
 import { Repository } from 'typeorm';
 import { CreateContractDTO, UpdateContractDTO } from '../dto/contract.dto';
 import { UserService } from 'src/user/user.service';
@@ -17,6 +17,10 @@ export class ContractService {
 
   async create(dto: CreateContractDTO): Promise<Contract> {
     const { vendorId, customerId, ...contractData } = dto;
+
+    if (!vendorId) {
+      throw new NotFoundException('Vendor ID is required');
+    }
 
     const [vendor, customer] = await Promise.all([
       this.userService.findOne(vendorId),
@@ -68,6 +72,21 @@ export class ContractService {
       .getMany();
 
     return contracts;
+  }
+
+  async findAllRequests(vendorId?: string): Promise<Contract[]> {
+    const query = this.contractRepo
+      .createQueryBuilder('contract')
+      .leftJoinAndSelect('contract.vendorId', 'vendor')
+      .leftJoinAndSelect('contract.customerId', 'customer')
+      .leftJoinAndSelect('contract.products', 'products')
+      .where('contract.status = :status', { status: ContractStatus.PENDING });
+
+    if (vendorId) {
+      query.andWhere('contract.vendorId = :vendorId', { vendorId });
+    }
+
+    return await query.getMany();
   }
 
   async findOne(id: string): Promise<Contract> {
