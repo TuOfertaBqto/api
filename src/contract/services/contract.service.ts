@@ -71,7 +71,7 @@ export class ContractService {
       .addOrderBy('contract.createdAt', 'DESC')
       .getMany();
 
-    return contracts;
+    return instanceToPlain(contracts) as Contract[];
   }
 
   async findAllRequests(vendorId?: string): Promise<Contract[]> {
@@ -79,14 +79,16 @@ export class ContractService {
       .createQueryBuilder('contract')
       .leftJoinAndSelect('contract.vendorId', 'vendor')
       .leftJoinAndSelect('contract.customerId', 'customer')
-      .leftJoinAndSelect('contract.products', 'products')
+      .leftJoinAndSelect('contract.products', 'contractProduct')
+      .leftJoinAndSelect('contractProduct.product', 'product')
       .where('contract.status = :status', { status: ContractStatus.PENDING });
 
     if (vendorId) {
       query.andWhere('contract.vendorId = :vendorId', { vendorId });
     }
+    const contracts = await query.getMany();
 
-    return await query.getMany();
+    return instanceToPlain(contracts) as Contract[];
   }
 
   async findOne(id: string): Promise<Contract> {
