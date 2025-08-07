@@ -13,6 +13,9 @@ export class Product extends BaseModel {
   @Column({ type: 'int', name: 'price' })
   price: number;
 
+  @Column({ type: 'int', name: 'installment_amount', default: 0 })
+  installmentAmount: number;
+
   @ManyToOne(() => Category)
   @JoinColumn({ name: 'category_id' })
   categoryId: Category;
