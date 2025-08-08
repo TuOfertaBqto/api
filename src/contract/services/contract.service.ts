@@ -133,6 +133,7 @@ export class ContractService {
       contract.installmentAmount = dto.installmentAmount;
     if (dto.totalPrice !== undefined) contract.totalPrice = dto.totalPrice;
     if (dto.agreement !== undefined) contract.agreement = dto.agreement;
+    if (dto.status !== undefined) contract.status = dto.status;
 
     return await this.contractRepo.save(contract);
   }
