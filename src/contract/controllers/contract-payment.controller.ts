@@ -14,7 +14,7 @@ import {
   UpdateContractPaymentDTO,
 } from '../dto/contract-payment.dto';
 import {
-  generatePayments,
+  generateInstallments,
   getNextSaturday,
 } from 'src/utils/create-contract-payment';
 import { ContractService } from '../services/contract.service';
@@ -29,10 +29,9 @@ export class ContractPaymentController {
   @Post()
   create(@Body() dto: CreateListContractPaymentDTO) {
     const firstDueDate = getNextSaturday(dto.startContract);
-    const payments = generatePayments(
+    const payments = generateInstallments(
       dto.contractId,
-      dto.totalPriceContract,
-      dto.installmentAmountContract,
+      dto.products,
       dto.agreementContract,
       firstDueDate,
     );
