@@ -62,18 +62,18 @@ export class ContractPaymentController {
     const payment = await this.service.findOne(id);
 
     let paymentId = payment.id;
-    let remainingAmount =
+    let remainingAmount = //40
       parseFloat(payment.amountPaid?.toString() ?? 0) + dto.amountPaid;
 
     while (remainingAmount > 0) {
       const installment = await this.service.findOne(paymentId);
-      const installmentAmount = installment.installmentAmount;
+      const installmentAmount = installment.installmentAmount; //20
       const amountToPay = Math.min(installmentAmount, remainingAmount); // posiblemebte luego poner el monto que se debe
 
       const newDebt =
         installment.debt -
         amountToPay +
-        parseFloat(payment.amountPaid?.toString() ?? 0);
+        parseFloat(installment.amountPaid?.toString() ?? 0);
 
       await this.service.update(installment, {
         amountPaid: amountToPay,
