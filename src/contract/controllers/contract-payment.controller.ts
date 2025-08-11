@@ -64,10 +64,10 @@ export class ContractPaymentController {
     let paymentId = payment.id;
     let remainingAmount =
       parseFloat(payment.amountPaid?.toString() ?? 0) + dto.amountPaid;
-    const installmentAmount = payment.contract.installmentAmount;
 
     while (remainingAmount > 0) {
       const installment = await this.service.findOne(paymentId);
+      const installmentAmount = installment.installmentAmount;
       const amountToPay = Math.min(installmentAmount, remainingAmount); // posiblemebte luego poner el monto que se debe
 
       const newDebt =
