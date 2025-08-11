@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Min,
 } from 'class-validator';
 
 export class CreateProductDTO {
@@ -15,6 +16,10 @@ export class CreateProductDTO {
   @IsString()
   @IsOptional()
   description?: string;
+
+  @IsInt()
+  @Min(1)
+  installmentAmount: number;
 
   @IsInt()
   @IsNotEmpty()
