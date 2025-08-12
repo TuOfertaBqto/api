@@ -51,6 +51,7 @@ export class ContractService {
       .leftJoinAndSelect('contract.customerId', 'customer')
       .leftJoinAndSelect('contract.products', 'contractProduct')
       .leftJoinAndSelect('contractProduct.product', 'product')
+      .where('contract.status = :status', { status: ContractStatus.APPROVED })
       .addSelect(
         `
       CASE
