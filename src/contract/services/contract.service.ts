@@ -75,7 +75,7 @@ export class ContractService {
     return instanceToPlain(contracts) as Contract[];
   }
 
-  async findAllRequests(vendorId?: string): Promise<Contract[]> {
+  async findAllRequestsMain(): Promise<Contract[]> {
     const query = this.contractRepo
       .createQueryBuilder('contract')
       .leftJoinAndSelect('contract.vendorId', 'vendor')
@@ -84,9 +84,36 @@ export class ContractService {
       .leftJoinAndSelect('contractProduct.product', 'product')
       .where('contract.status = :status', { status: ContractStatus.PENDING });
 
-    if (vendorId) {
-      query.andWhere('contract.vendorId = :vendorId', { vendorId });
-    }
+    const contracts = await query.getMany();
+
+    return instanceToPlain(contracts) as Contract[];
+  }
+
+  async findAllRequestsVendor(vendorId: string): Promise<Contract[]> {
+    const query = this.contractRepo
+      .createQueryBuilder('contract')
+      .leftJoinAndSelect('contract.vendorId', 'vendor')
+      .leftJoinAndSelect('contract.customerId', 'customer')
+      .leftJoinAndSelect('contract.products', 'contractProduct')
+      .leftJoinAndSelect('contractProduct.product', 'product')
+      .where('contract.vendorId = :vendorId', { vendorId })
+      .orderBy(
+        `
+      CASE 
+        WHEN contract.status = :pending THEN 1
+        WHEN contract.status = :approved THEN 2
+        WHEN contract.status = :canceled THEN 3
+      END
+      `,
+        'ASC',
+      )
+      .addOrderBy('contract.createdAt', 'DESC')
+      .setParameters({
+        pending: ContractStatus.PENDING,
+        approved: ContractStatus.APPROVED,
+        canceled: ContractStatus.CANCELED,
+      });
+
     const contracts = await query.getMany();
 
     return instanceToPlain(contracts) as Contract[];

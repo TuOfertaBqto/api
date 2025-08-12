@@ -79,10 +79,10 @@ export class ContractController {
   ): Promise<Contract[]> {
     switch (payload.role) {
       case UserRole.VENDOR:
-        return this.contractService.findAllRequests(payload.sub);
+        return this.contractService.findAllRequestsVendor(payload.sub);
 
       case UserRole.MAIN:
-        return this.contractService.findAllRequests();
+        return this.contractService.findAllRequestsMain();
 
       default:
         throw new ForbiddenException(
