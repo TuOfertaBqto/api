@@ -35,7 +35,9 @@ export const ValidatedJwt = createParamDecorator(
     try {
       decoded = jwt.verify(token, jwtSecret) as JwtPayloadDTO;
     } catch (err) {
-      console.error('JWT verification error:', err);
+      if (process.env.NODE_ENV !== 'prod') {
+        console.error('JWT verification error:', err);
+      }
       throw new UnauthorizedException('Invalid or expired JWT');
     }
 
