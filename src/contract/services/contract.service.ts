@@ -187,4 +187,12 @@ export class ContractService {
       },
     });
   }
+
+  async countCanceledContracts(): Promise<number> {
+    return this.contractRepo.count({
+      where: {
+        status: ContractStatus.CANCELED,
+      },
+    });
+  }
 }

@@ -95,8 +95,13 @@ export class ContractController {
   async countContracts() {
     const actives = await this.contractService.countActiveContracts();
     const toDispatch = await this.contractService.countPendingDispatch();
+    const canceled = await this.contractService.countCanceledContracts();
 
-    return { activeContracts: actives, pendingToDispatch: toDispatch };
+    return {
+      activeContracts: actives,
+      pendingToDispatch: toDispatch,
+      canceledContracts: canceled,
+    };
   }
 
   @Get(':id')
