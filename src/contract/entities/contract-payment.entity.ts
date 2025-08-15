@@ -37,6 +37,9 @@ export class ContractPayment extends BaseModel {
   @Column({ type: 'timestamp', name: 'due_date' })
   dueDate: Date;
 
+  @Column({ type: 'int', name: 'installment_amount', default: 0 })
+  installmentAmount: number;
+
   @Column({
     type: 'decimal',
     name: 'amount_paid',

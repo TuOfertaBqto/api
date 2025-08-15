@@ -9,7 +9,7 @@ import {
   IsUUID,
   ValidateNested,
 } from 'class-validator';
-import { Agreement } from '../entities/contract.entity';
+import { Agreement, ContractStatus } from '../entities/contract.entity';
 import { IntersectionType, PartialType } from '@nestjs/mapped-types';
 import { BaseDTO } from 'src/utils/dto/base.dto';
 import { Type } from 'class-transformer';
@@ -28,7 +28,8 @@ class ContractProductDTO {
 
 export class CreateContractDTO {
   @IsUUID()
-  vendorId: string;
+  @IsOptional()
+  vendorId?: string;
 
   @IsUUID()
   customerId: string;
@@ -45,13 +46,18 @@ export class CreateContractDTO {
   endDate?: Date;
 
   @IsNumber()
-  installmentAmount: number;
+  @IsOptional()
+  installmentAmount?: number;
 
   @IsEnum(Agreement)
   agreement: Agreement;
 
   @IsNumber()
   totalPrice: number;
+
+  @IsOptional()
+  @IsEnum(ContractStatus)
+  status?: ContractStatus;
 }
 
 export class CreateContractWithProductsDTO extends CreateContractDTO {

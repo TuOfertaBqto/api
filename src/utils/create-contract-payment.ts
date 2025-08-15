@@ -1,4 +1,11 @@
 import { CreateContractPaymentDTO } from 'src/contract/dto/contract-payment.dto';
+import { Agreement } from 'src/contract/entities/contract.entity';
+
+interface ProductPayment {
+  price: number;
+  installmentAmount: number;
+  quantity: number;
+}
 
 export function getNextSaturday(fromDate: string | Date): Date {
   const date =
@@ -14,28 +21,62 @@ export function getNextSaturday(fromDate: string | Date): Date {
   return date;
 }
 
-export function generatePayments(
+export function generateInstallments(
   contractId: string,
-  totalPrice: number,
-  installmentAmount: number,
-  agreement: 'weekly' | 'fortnightly',
+  products: ProductPayment[],
+  agreement: Agreement,
   startDate: Date,
 ): CreateContractPaymentDTO[] {
   const payments: CreateContractPaymentDTO[] = [];
 
-  const intervalDays = agreement === 'weekly' ? 7 : 14;
+  const intervalDays = agreement === Agreement.WEEKLY ? 7 : 14;
 
-  const totalInstallments = Math.ceil(totalPrice / installmentAmount);
+  const remainingProducts = products.map((p) => {
+    let adjustedInstallment = p.installmentAmount * p.quantity;
 
-  for (let i = 0; i < totalInstallments; i++) {
+    if (agreement === Agreement.FORTNIGHTLY) {
+      adjustedInstallment *= 2;
+    }
+
+    const totalCost = p.price * p.quantity;
+
+    return {
+      remainingBalance: totalCost,
+      adjustedInstallment,
+    };
+  });
+
+  let installmentIndex = 0;
+
+  while (remainingProducts.some((p) => p.remainingBalance > 0)) {
+    let periodPayment = 0;
+
+    remainingProducts.forEach((p) => {
+      if (p.remainingBalance > 0) {
+        if (p.remainingBalance >= p.adjustedInstallment) {
+          periodPayment += p.adjustedInstallment;
+          p.remainingBalance -= p.adjustedInstallment;
+        } else {
+          periodPayment += p.remainingBalance;
+          p.remainingBalance = 0;
+        }
+      }
+    });
+
     const dueDate = new Date(startDate);
-    dueDate.setDate(startDate.getDate() + i * intervalDays);
+    dueDate.setDate(startDate.getDate() + installmentIndex * intervalDays);
 
     payments.push({
       contract: { id: contractId },
       dueDate: dueDate.toISOString(),
-      debt: i === 0 ? totalPrice : undefined,
+      installmentAmount: periodPayment,
+      debt:
+        installmentIndex === 0
+          ? products.reduce((sum, prod) => sum + prod.price * prod.quantity, 0)
+          : undefined,
     });
+
+    installmentIndex++;
   }
 
   return payments;

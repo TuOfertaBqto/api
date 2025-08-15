@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Contract } from '../entities/contract.entity';
+import { Contract, ContractStatus } from '../entities/contract.entity';
 import { Repository } from 'typeorm';
 import { CreateContractDTO, UpdateContractDTO } from '../dto/contract.dto';
 import { UserService } from 'src/user/user.service';
@@ -16,22 +16,29 @@ export class ContractService {
   ) {}
 
   async create(dto: CreateContractDTO): Promise<Contract> {
-    const vendor = await this.userService.findOne(dto.vendorId);
-    const customer = await this.userService.findOne(dto.customerId);
+    const { vendorId, customerId, ...contractData } = dto;
 
-    if (!vendor || !customer) {
-      throw new NotFoundException('Vendor or customer not found');
+    if (!vendorId) {
+      throw new NotFoundException('Vendor ID is required');
+    }
+
+    const [vendor, customer] = await Promise.all([
+      this.userService.findOne(vendorId),
+      this.userService.findOne(customerId),
+    ]);
+
+    if (!vendor) {
+      throw new NotFoundException(`Vendor with ID ${vendorId} not found`);
+    }
+
+    if (!customer) {
+      throw new NotFoundException(`Customer with ID ${customerId} not found`);
     }
 
     const contract = this.contractRepo.create({
       vendorId: vendor,
       customerId: customer,
-      requestDate: dto.requestDate,
-      startDate: dto.startDate,
-      endDate: dto.endDate,
-      installmentAmount: dto.installmentAmount,
-      agreement: dto.agreement,
-      totalPrice: dto.totalPrice,
+      ...contractData,
     });
 
     return this.contractRepo.save(contract);
@@ -44,6 +51,7 @@ export class ContractService {
       .leftJoinAndSelect('contract.customerId', 'customer')
       .leftJoinAndSelect('contract.products', 'contractProduct')
       .leftJoinAndSelect('contractProduct.product', 'product')
+      .where('contract.status = :status', { status: ContractStatus.APPROVED })
       .addSelect(
         `
       CASE
@@ -64,7 +72,51 @@ export class ContractService {
       .addOrderBy('contract.createdAt', 'DESC')
       .getMany();
 
-    return contracts;
+    return instanceToPlain(contracts) as Contract[];
+  }
+
+  async findAllRequestsMain(): Promise<Contract[]> {
+    const query = this.contractRepo
+      .createQueryBuilder('contract')
+      .leftJoinAndSelect('contract.vendorId', 'vendor')
+      .leftJoinAndSelect('contract.customerId', 'customer')
+      .leftJoinAndSelect('contract.products', 'contractProduct')
+      .leftJoinAndSelect('contractProduct.product', 'product')
+      .where('contract.status = :status', { status: ContractStatus.PENDING });
+
+    const contracts = await query.getMany();
+
+    return instanceToPlain(contracts) as Contract[];
+  }
+
+  async findAllRequestsVendor(vendorId: string): Promise<Contract[]> {
+    const query = this.contractRepo
+      .createQueryBuilder('contract')
+      .leftJoinAndSelect('contract.vendorId', 'vendor')
+      .leftJoinAndSelect('contract.customerId', 'customer')
+      .leftJoinAndSelect('contract.products', 'contractProduct')
+      .leftJoinAndSelect('contractProduct.product', 'product')
+      .where('contract.vendorId = :vendorId', { vendorId })
+      .orderBy(
+        `
+      CASE 
+        WHEN contract.status = :pending THEN 1
+        WHEN contract.status = :approved THEN 2
+        WHEN contract.status = :canceled THEN 3
+      END
+      `,
+        'ASC',
+      )
+      .addOrderBy('contract.createdAt', 'DESC')
+      .setParameters({
+        pending: ContractStatus.PENDING,
+        approved: ContractStatus.APPROVED,
+        canceled: ContractStatus.CANCELED,
+      });
+
+    const contracts = await query.getMany();
+
+    return instanceToPlain(contracts) as Contract[];
   }
 
   async findOne(id: string): Promise<Contract> {
@@ -109,6 +161,7 @@ export class ContractService {
       contract.installmentAmount = dto.installmentAmount;
     if (dto.totalPrice !== undefined) contract.totalPrice = dto.totalPrice;
     if (dto.agreement !== undefined) contract.agreement = dto.agreement;
+    if (dto.status !== undefined) contract.status = dto.status;
 
     return await this.contractRepo.save(contract);
   }

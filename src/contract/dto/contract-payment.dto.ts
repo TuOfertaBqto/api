@@ -1,4 +1,6 @@
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsDateString,
   IsEnum,
   IsInt,
@@ -6,6 +8,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Min,
   ValidateNested,
 } from 'class-validator';
 import { PaymentMethod } from '../entities/contract-payment.entity';
@@ -37,6 +40,9 @@ export class CreateContractPaymentDTO {
   @IsDateString()
   dueDate: string;
 
+  @IsInt()
+  installmentAmount: number;
+
   @IsOptional()
   @IsNumber()
   amountPaid?: number;
@@ -50,6 +56,20 @@ export class CreateContractPaymentDTO {
   debt?: number;
 }
 
+class ProductPaymentDTO {
+  @IsNumber()
+  @Min(0)
+  price: number;
+
+  @IsNumber()
+  @Min(0)
+  installmentAmount: number;
+
+  @IsNumber()
+  @Min(1)
+  quantity: number;
+}
+
 export class CreateListContractPaymentDTO {
   @IsUUID()
   contractId: string;
@@ -57,14 +77,14 @@ export class CreateListContractPaymentDTO {
   @IsDateString()
   startContract: string;
 
-  @IsInt()
-  installmentAmountContract: number;
-
   @IsEnum(Agreement)
   agreementContract: Agreement;
 
-  @IsInt()
-  totalPriceContract: number;
+  @IsArray()
+  @ArrayNotEmpty()
+  @ValidateNested({ each: true })
+  @Type(() => ProductPaymentDTO)
+  products: ProductPaymentDTO[];
 }
 
 export class UpdateContractPaymentDTO extends PartialType(

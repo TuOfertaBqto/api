@@ -14,7 +14,7 @@ import {
   UpdateContractPaymentDTO,
 } from '../dto/contract-payment.dto';
 import {
-  generatePayments,
+  generateInstallments,
   getNextSaturday,
 } from 'src/utils/create-contract-payment';
 import { ContractService } from '../services/contract.service';
@@ -29,10 +29,9 @@ export class ContractPaymentController {
   @Post()
   create(@Body() dto: CreateListContractPaymentDTO) {
     const firstDueDate = getNextSaturday(dto.startContract);
-    const payments = generatePayments(
+    const payments = generateInstallments(
       dto.contractId,
-      dto.totalPriceContract,
-      dto.installmentAmountContract,
+      dto.products,
       dto.agreementContract,
       firstDueDate,
     );
@@ -63,18 +62,18 @@ export class ContractPaymentController {
     const payment = await this.service.findOne(id);
 
     let paymentId = payment.id;
-    let remainingAmount =
+    let remainingAmount = //40
       parseFloat(payment.amountPaid?.toString() ?? 0) + dto.amountPaid;
-    const installmentAmount = payment.contract.installmentAmount;
 
     while (remainingAmount > 0) {
       const installment = await this.service.findOne(paymentId);
+      const installmentAmount = installment.installmentAmount; //20
       const amountToPay = Math.min(installmentAmount, remainingAmount); // posiblemebte luego poner el monto que se debe
 
       const newDebt =
         installment.debt -
         amountToPay +
-        parseFloat(payment.amountPaid?.toString() ?? 0);
+        parseFloat(installment.amountPaid?.toString() ?? 0);
 
       await this.service.update(installment, {
         amountPaid: amountToPay,

@@ -13,19 +13,26 @@ import {
 import { UserService } from './user.service';
 import { ConfigService } from '@nestjs/config';
 import { CreateUserDTO, ResponseUserDTO, UpdateUserDTO } from './dto/user.dto';
-import { UserRole } from './entities/user.entity';
+import { User, UserRole } from './entities/user.entity';
 import { instanceToPlain } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
+import { VendorCustomerService } from './vendor-customer.service';
+import { ValidatedJwt } from 'src/auth/decorators/validated-jwt.decorator';
+import { JwtPayloadDTO } from 'src/auth/dto/jwt.dto';
 
 @Controller('user')
 export class UserController {
   constructor(
     private readonly userService: UserService,
+    private readonly vendorCustomerService: VendorCustomerService,
     private readonly configService: ConfigService,
   ) {}
 
   @Post()
-  async create(@Body() createUserDto: CreateUserDTO): Promise<ResponseUserDTO> {
+  async create(
+    @ValidatedJwt() payload: JwtPayloadDTO,
+    @Body() createUserDto: CreateUserDTO,
+  ): Promise<ResponseUserDTO> {
     if (createUserDto.role && createUserDto.role === UserRole.VENDOR) {
       createUserDto.code = await this.userService.getNextAvailableCode();
     }
@@ -49,12 +56,29 @@ export class UserController {
 
     const userSaved = await this.userService.create(createUserDto);
 
+    if (payload.role === UserRole.VENDOR) {
+      await this.vendorCustomerService.create({
+        vendorId: payload.sub,
+        customerId: userSaved.id,
+      });
+    }
+
     return instanceToPlain(userSaved) as ResponseUserDTO;
   }
 
   @Get()
-  async findAll(@Query('role') role?: UserRole) {
-    const users = await this.userService.findAll(role);
+  async findAll(
+    @ValidatedJwt() payload: JwtPayloadDTO,
+    @Query('role') role?: UserRole,
+  ) {
+    let users: User[] = [];
+    if (payload.role === UserRole.VENDOR) {
+      users = await this.vendorCustomerService.findCustomersByVendor(
+        payload.sub,
+      );
+    } else {
+      users = await this.userService.findAll(role);
+    }
     return users.map((user) => instanceToPlain(user));
   }
 
