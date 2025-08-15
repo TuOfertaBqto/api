@@ -178,4 +178,13 @@ export class ContractService {
       },
     });
   }
+
+  async countPendingDispatch(): Promise<number> {
+    return this.contractRepo.count({
+      where: {
+        startDate: IsNull(),
+        status: ContractStatus.APPROVED,
+      },
+    });
+  }
 }
