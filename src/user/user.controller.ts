@@ -12,7 +12,12 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { ConfigService } from '@nestjs/config';
-import { CreateUserDTO, ResponseUserDTO, UpdateUserDTO } from './dto/user.dto';
+import {
+  CreateUserDTO,
+  ResponseUserDTO,
+  UpdateUserDTO,
+  VendorStatsDTO,
+} from './dto/user.dto';
 import { User, UserRole } from './entities/user.entity';
 import { instanceToPlain } from 'class-transformer';
 import * as bcrypt from 'bcrypt';
@@ -80,6 +85,13 @@ export class UserController {
       users = await this.userService.findAll(role);
     }
     return users.map((user) => instanceToPlain(user));
+  }
+
+  @Get('vendor-stats')
+  async getVendorsContractsStats(): Promise<VendorStatsDTO[]> {
+    const stats = await this.userService.getVendorsWithContractsStats();
+
+    return stats;
   }
 
   @Get(':id')

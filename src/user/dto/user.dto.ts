@@ -56,3 +56,23 @@ export class CreateUserDTO extends UserDTO {
 export class UpdateUserDTO extends PartialType(UserDTO) {}
 
 export class ResponseUserDTO extends IntersectionType(CreateUserDTO, BaseDTO) {}
+
+export class VendorStatsDTO {
+  @IsString()
+  vendorId: string;
+
+  @IsString()
+  vendorName: string;
+
+  @IsString()
+  activeContracts: string;
+
+  @IsString()
+  pendingContracts: string;
+
+  @IsString()
+  cancelledContracts: string;
+
+  @IsString()
+  finishedContracts: string;
+}
