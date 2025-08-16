@@ -195,4 +195,12 @@ export class ContractService {
       },
     });
   }
+
+  async countCompletedContracts(): Promise<number> {
+    return this.contractRepo.count({
+      where: {
+        endDate: Not(IsNull()),
+      },
+    });
+  }
 }
