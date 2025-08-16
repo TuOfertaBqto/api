@@ -89,8 +89,8 @@ export class UserService {
     return this.userRepository
       .createQueryBuilder('vendor')
       .leftJoin('vendor.contracts', 'contract')
-      .where('vendor.role = :role', { role: 'vendor' })
-      .select('vendor.id', 'vendorId')
+      .where('vendor.code IS NOT NULL')
+      .select('vendor.code', 'code')
       .addSelect("vendor.firstName || ' ' || vendor.lastName", 'vendorName')
       .addSelect(
         `COUNT(CASE 
