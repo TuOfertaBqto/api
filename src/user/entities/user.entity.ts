@@ -1,6 +1,7 @@
 import { Exclude } from 'class-transformer';
+import { Contract } from 'src/contract/entities/contract.entity';
 import { BaseModel } from 'src/utils/entity';
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 
 export enum UserRole {
   MAIN = 'main',
@@ -47,4 +48,7 @@ export class User extends BaseModel {
 
   @Column({ type: 'text', name: 'document_id_photo', nullable: true })
   documentIdPhoto: string;
+
+  @OneToMany(() => Contract, (contract) => contract.vendorId)
+  contracts: Contract[];
 }

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Contract, ContractStatus } from '../entities/contract.entity';
-import { Repository } from 'typeorm';
+import { IsNull, Not, Repository } from 'typeorm';
 import { CreateContractDTO, UpdateContractDTO } from '../dto/contract.dto';
 import { UserService } from 'src/user/user.service';
 import { instanceToPlain } from 'class-transformer';
@@ -168,5 +168,39 @@ export class ContractService {
 
   async remove(id: string): Promise<void> {
     await this.contractRepo.softDelete(id);
+  }
+
+  async countActiveContracts(): Promise<number> {
+    return this.contractRepo.count({
+      where: {
+        startDate: Not(IsNull()),
+        endDate: IsNull(),
+      },
+    });
+  }
+
+  async countPendingDispatch(): Promise<number> {
+    return this.contractRepo.count({
+      where: {
+        startDate: IsNull(),
+        status: ContractStatus.APPROVED,
+      },
+    });
+  }
+
+  async countCanceledContracts(): Promise<number> {
+    return this.contractRepo.count({
+      where: {
+        status: ContractStatus.CANCELED,
+      },
+    });
+  }
+
+  async countCompletedContracts(): Promise<number> {
+    return this.contractRepo.count({
+      where: {
+        endDate: Not(IsNull()),
+      },
+    });
   }
 }

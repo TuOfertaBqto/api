@@ -6,7 +6,12 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { User, UserRole } from './entities/user.entity';
 import { IsNull, Not, Repository } from 'typeorm';
-import { ResponseUserDTO, UpdateUserDTO, UserDTO } from './dto/user.dto';
+import {
+  ResponseUserDTO,
+  UpdateUserDTO,
+  UserDTO,
+  VendorStatsDTO,
+} from './dto/user.dto';
 
 @Injectable()
 export class UserService {
@@ -78,5 +83,48 @@ export class UserService {
 
   async remove(id: string): Promise<void> {
     await this.userRepository.softDelete(id);
+  }
+
+  async getVendorsWithContractsStats(): Promise<VendorStatsDTO[]> {
+    return this.userRepository
+      .createQueryBuilder('vendor')
+      .leftJoin('vendor.contracts', 'contract')
+      .where('vendor.code IS NOT NULL')
+      .select('vendor.code', 'code')
+      .addSelect("vendor.firstName || ' ' || vendor.lastName", 'vendorName')
+      .addSelect(
+        `COUNT(CASE 
+        WHEN contract.startDate IS NOT NULL 
+         AND contract.endDate IS NULL 
+         AND contract.deletedAt IS NULL
+        THEN 1 END)`,
+        'activeContracts',
+      )
+      .addSelect(
+        `COUNT(CASE 
+        WHEN contract.startDate IS NULL 
+         AND contract.status = 'approved' 
+         AND contract.deletedAt IS NULL
+        THEN 1 END)`,
+        'pendingContracts',
+      )
+      .addSelect(
+        `COUNT(CASE 
+        WHEN contract.status = 'canceled' 
+         AND contract.deletedAt IS NULL
+        THEN 1 END)`,
+        'cancelledContracts',
+      )
+      .addSelect(
+        `COUNT(CASE 
+        WHEN contract.endDate IS NOT NULL
+         AND contract.deletedAt IS NULL
+        THEN 1 END)`,
+        'finishedContracts',
+      )
+      .groupBy('vendor.id')
+      .orderBy('vendor.firstName')
+      .addOrderBy('vendor.lastName')
+      .getRawMany();
   }
 }
