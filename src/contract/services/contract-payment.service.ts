@@ -11,6 +11,7 @@ import {
 import { plainToInstance } from 'class-transformer';
 type RawRow = {
   vendorId: string;
+  code: string;
   vendorFirstName: string;
   vendorLastName: string;
   customerId: string;
@@ -135,6 +136,7 @@ export class ContractPaymentService {
       .innerJoin('c.vendorId', 'v')
       .innerJoin('c.customerId', 'cust')
       .select('v.id', 'vendorId')
+      .addSelect('v.code', 'code')
       .addSelect('v.firstName', 'vendorFirstName')
       .addSelect('v.lastName', 'vendorLastName')
       .addSelect('cust.id', 'customerId')
@@ -147,7 +149,7 @@ export class ContractPaymentService {
       .where(`cp.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
       .andWhere('cp.paidAt IS NULL')
       .groupBy(
-        'v.id, v.firstName, v.lastName, cust.id, cust.firstName, cust.lastName, c.id, c.code',
+        'v.id, v.code, v.firstName, v.lastName, cust.id, cust.firstName, cust.lastName, c.id, c.code',
       )
       .orderBy('cust.firstName', 'ASC')
       .addOrderBy('c.code', 'ASC')
@@ -158,6 +160,7 @@ export class ContractPaymentService {
         if (!acc[row.vendorId]) {
           acc[row.vendorId] = {
             vendorId: row.vendorId,
+            code: row.code,
             vendorName: `${row.vendorFirstName} ${row.vendorLastName}`,
             customers: [],
           };

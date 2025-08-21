@@ -105,6 +105,7 @@ class CustomerWithDebt {
 }
 export class VendorsWithDebtsDTO {
   vendorId: string;
+  code: string;
   vendorName: string;
   customers: CustomerWithDebt[];
 }
