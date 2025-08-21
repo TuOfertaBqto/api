@@ -103,7 +103,7 @@ class CustomerWithDebt {
   customerName: string;
   contracts: ContractDebt[];
 }
-export interface VendorsWithDebtsDTO {
+export class VendorsWithDebtsDTO {
   vendorId: string;
   vendorName: string;
   customers: CustomerWithDebt[];
