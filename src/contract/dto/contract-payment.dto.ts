@@ -90,3 +90,21 @@ export class CreateListContractPaymentDTO {
 export class UpdateContractPaymentDTO extends PartialType(
   CreateContractPaymentDTO,
 ) {}
+
+class ContractDebt {
+  contractId: string;
+  contractCode: string;
+  overdueInstallments: number;
+  overdueAmount: number;
+}
+
+class CustomerWithDebt {
+  customerId: string;
+  customerName: string;
+  contracts: ContractDebt[];
+}
+export interface VendorsWithDebtsDTO {
+  vendorId: string;
+  vendorName: string;
+  customers: CustomerWithDebt[];
+}
