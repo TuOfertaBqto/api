@@ -145,7 +145,10 @@ export class ContractPaymentService {
       .addSelect('c.id', 'contractId')
       .addSelect('c.code', 'contractCode')
       .addSelect('COUNT(cp.id)', 'overdueInstallments')
-      .addSelect('SUM(cp.installmentAmount)', 'overdueAmount')
+      .addSelect(
+        'SUM(cp.installmentAmount - COALESCE(cp.amountPaid, 0))',
+        'overdueAmount',
+      )
       .where(`cp.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
       .andWhere('cp.paidAt IS NULL')
       .groupBy(
