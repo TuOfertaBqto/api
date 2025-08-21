@@ -96,6 +96,7 @@ class ContractDebt {
   contractCode: string;
   overdueInstallments: number;
   overdueAmount: number;
+  overdueNumbers: number[];
 }
 
 class CustomerWithDebt {
