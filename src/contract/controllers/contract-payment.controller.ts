@@ -44,6 +44,11 @@ export class ContractPaymentController {
     return this.service.findAll();
   }
 
+  @Get('overdue/customers-by-vendor')
+  async getOverdueCustomersByVendor() {
+    return this.service.getOverdueCustomersByVendor();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.service.findOne(id);
