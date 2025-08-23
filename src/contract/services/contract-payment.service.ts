@@ -241,4 +241,32 @@ export class ContractPaymentService {
 
     return Object.values(grouped);
   }
+
+  async getTotalInstallmentsByVendor(vendorId: string): Promise<number> {
+    const result = await this.repo
+      .createQueryBuilder('cp')
+      .innerJoin('cp.contract', 'c')
+      .innerJoin('c.vendorId', 'v')
+      .where('v.id = :vendorId', { vendorId })
+      .select('SUM(cp.installmentAmount)', 'total')
+      .getRawOne<{ total: string }>();
+
+    return Number(result?.total ?? 0);
+  }
+
+  async getTotalOverdueByVendor(vendorId: string): Promise<number> {
+    const result = await this.repo
+      .createQueryBuilder('cp')
+      .innerJoin('cp.contract', 'c')
+      .innerJoin('c.vendorId', 'v')
+      .where('v.id = :vendorId', { vendorId })
+      .andWhere(`cp.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
+      .select(
+        'SUM(cp.installmentAmount - COALESCE(cp.amountPaid, 0))',
+        'totalDebt',
+      )
+      .getRawOne<{ totalDebt: string }>();
+
+    return Number(result?.totalDebt ?? 0);
+  }
 }
