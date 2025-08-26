@@ -40,6 +40,14 @@ export class UserController {
   ): Promise<ResponseUserDTO> {
     if (createUserDto.role && createUserDto.role === UserRole.VENDOR) {
       createUserDto.code = await this.userService.getNextAvailableCode();
+
+      if (!createUserDto.documentId) {
+        throw new HttpException(
+          'document_id is required for vendor users',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+      createUserDto.password = await bcrypt.hash(createUserDto.documentId, 10);
     }
     if (
       createUserDto.role !== undefined &&

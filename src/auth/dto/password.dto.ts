@@ -5,7 +5,7 @@ export class PasswordDTO {
   @Transform(({ value }: { value: string }) => value.trim())
   @IsNotEmpty()
   @MaxLength(255)
-  @MinLength(8)
+  @MinLength(7)
   password: string;
 }
 
@@ -13,6 +13,6 @@ export class ChangePasswordDTO extends PasswordDTO {
   @Transform(({ value }: { value: string }) => value.trim())
   @IsNotEmpty()
   @MaxLength(255)
-  @MinLength(8)
+  @MinLength(7)
   currentPassword: string;
 }
