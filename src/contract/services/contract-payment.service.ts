@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ContractPayment } from '../entities/contract-payment.entity';
 import { Brackets, IsNull, MoreThan, Repository } from 'typeorm';
@@ -29,6 +34,7 @@ export class ContractPaymentService {
   constructor(
     @InjectRepository(ContractPayment)
     private readonly repo: Repository<ContractPayment>,
+    @Inject(forwardRef(() => ContractService))
     private readonly contractService: ContractService,
   ) {}
 
