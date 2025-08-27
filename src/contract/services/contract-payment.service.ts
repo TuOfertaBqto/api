@@ -269,4 +269,13 @@ export class ContractPaymentService {
 
     return Number(result?.totalDebt ?? 0);
   }
+
+  async deleteByContractId(contractId: string): Promise<void> {
+    const payments = await this.repo.find({
+      where: { contract: { id: contractId } },
+    });
+    if (payments.length) {
+      await this.repo.softRemove(payments);
+    }
+  }
 }
