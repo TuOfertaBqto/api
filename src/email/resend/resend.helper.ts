@@ -16,7 +16,7 @@ export class ResendHelper implements EmailHelper {
 
   constructor(configService: ConfigService) {
     this.apiKey = configService.get('RESEND_API_KEY', '');
-    this.sender = configService.get('PHARMATECH_SENDER', '');
+    this.sender = configService.get('RESEND_FROM', '');
     this.resend = new Resend(this.apiKey);
   }
 
