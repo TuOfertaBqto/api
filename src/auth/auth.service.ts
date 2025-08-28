@@ -4,6 +4,7 @@ import { User } from 'src/user/entities/user.entity';
 import { UserService } from 'src/user/user.service';
 import * as bcrypt from 'bcrypt';
 import { LoginDTO } from './dto/login.dto';
+import { JwtPayloadDTO } from './dto/jwt.dto';
 
 @Injectable()
 export class AuthService {
@@ -28,7 +29,11 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    const payload = { sub: user.id, role: user.role, email: user.email };
+    const payload: JwtPayloadDTO = {
+      sub: user.id,
+      role: user.role,
+      email: user.email,
+    };
     const token = await this.jwtService.signAsync(payload);
 
     return {

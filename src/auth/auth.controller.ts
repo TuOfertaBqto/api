@@ -1,4 +1,11 @@
-import { Body, Controller, Get, Post, Req } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDTO } from './dto/login.dto';
 import { JwtPayloadDTO } from './dto/jwt.dto';
@@ -6,8 +13,9 @@ import { ValidatedJwt } from './decorators/validated-jwt.decorator';
 import { UserService } from 'src/user/user.service';
 import { JwtService } from '@nestjs/jwt';
 import { EmailService } from 'src/email/email.service';
-import { ForgotPasswordDTO } from './dto/password.dto';
+import { ForgotPasswordDTO, ResetPasswordDTO } from './dto/password.dto';
 import { Request } from 'express';
+import * as bcrypt from 'bcrypt';
 
 @Controller('auth')
 export class AuthController {
@@ -45,7 +53,7 @@ export class AuthController {
     const user = await this.userService.findByEmail(email);
 
     const token = await this.jwtService.signAsync(
-      { sub: user.id },
+      { sub: user.id, role: user.role, email: user.email },
       { expiresIn: '15m' },
     );
 
@@ -119,5 +127,23 @@ ${origin}/reset-password?token=${token}
     });
 
     return { message: 'Se envió el correo de recuperación' };
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() body: ResetPasswordDTO) {
+    try {
+      const payload = await this.jwtService.verifyAsync<JwtPayloadDTO>(
+        body.token,
+      );
+
+      const newPassword = await bcrypt.hash(body.newPassword, 10);
+
+      await this.userService.update(payload.sub, { password: newPassword });
+
+      return { message: 'Contraseña actualizada correctamente' };
+    } catch (e) {
+      console.error('Error verifying reset password token:', e);
+      throw new BadRequestException('Token inválido o expirado');
+    }
   }
 }
