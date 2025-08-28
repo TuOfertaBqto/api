@@ -1,5 +1,5 @@
 import { Transform } from 'class-transformer';
-import { IsNotEmpty, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, IsNotEmpty, MaxLength, MinLength } from 'class-validator';
 
 export class PasswordDTO {
   @Transform(({ value }: { value: string }) => value.trim())
@@ -15,4 +15,11 @@ export class ChangePasswordDTO extends PasswordDTO {
   @MaxLength(255)
   @MinLength(7)
   currentPassword: string;
+}
+
+export class ForgotPasswordDTO {
+  @Transform(({ value }: { value: string }) => value.trim().toLowerCase())
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
 }
