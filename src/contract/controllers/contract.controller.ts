@@ -112,7 +112,10 @@ export class ContractController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdateContractDTO) {
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdateContractDTO,
+  ): Promise<Contract> {
     return this.contractService.update(id, dto);
   }
 

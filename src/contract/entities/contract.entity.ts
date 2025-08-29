@@ -2,6 +2,7 @@ import { User } from 'src/user/entities/user.entity';
 import { BaseModel } from 'src/utils/entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { ContractProduct } from './contract-product.entity';
+import { ContractPayment } from './contract-payment.entity';
 
 export enum Agreement {
   WEEKLY = 'weekly',
@@ -55,4 +56,7 @@ export class Contract extends BaseModel {
 
   @OneToMany(() => ContractProduct, (cp) => cp.contract, { cascade: true })
   products: ContractProduct[];
+
+  @OneToMany(() => ContractPayment, (cp) => cp.contract, { cascade: true })
+  payments: ContractPayment[];
 }

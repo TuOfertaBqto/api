@@ -5,6 +5,8 @@ import { IsNull, Not, Repository } from 'typeorm';
 import { CreateContractDTO, UpdateContractDTO } from '../dto/contract.dto';
 import { UserService } from 'src/user/user.service';
 import { instanceToPlain } from 'class-transformer';
+import { ContractProductService } from './contract-product.service';
+import { ContractPaymentService } from './contract-payment.service';
 
 @Injectable()
 export class ContractService {
@@ -13,6 +15,8 @@ export class ContractService {
     private readonly contractRepo: Repository<Contract>,
 
     private readonly userService: UserService,
+    private readonly contractProductService: ContractProductService,
+    private readonly contractPaymentService: ContractPaymentService,
   ) {}
 
   async create(dto: CreateContractDTO): Promise<Contract> {
@@ -167,7 +171,12 @@ export class ContractService {
   }
 
   async remove(id: string): Promise<void> {
-    await this.contractRepo.softDelete(id);
+    const contract = await this.findOne(id);
+
+    await this.contractProductService.deleteByContractId(id);
+    await this.contractPaymentService.deleteByContractId(id);
+
+    await this.contractRepo.softRemove(contract);
   }
 
   async countActiveContracts(): Promise<number> {

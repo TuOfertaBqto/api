@@ -78,4 +78,13 @@ export class ContractProductService {
   async remove(id: string): Promise<void> {
     await this.contractProductRepo.softDelete(id);
   }
+
+  async deleteByContractId(contractId: string): Promise<void> {
+    const products = await this.contractProductRepo.find({
+      where: { contract: { id: contractId } },
+    });
+    if (products.length) {
+      await this.contractProductRepo.softRemove(products);
+    }
+  }
 }

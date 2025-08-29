@@ -53,7 +53,7 @@ export class CreateUserDTO extends UserDTO {
   code?: string;
 }
 
-export class UpdateUserDTO extends PartialType(UserDTO) {}
+export class UpdateUserDTO extends PartialType(CreateUserDTO) {}
 
 export class ResponseUserDTO extends IntersectionType(CreateUserDTO, BaseDTO) {}
 

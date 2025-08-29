@@ -18,6 +18,8 @@ import {
   getNextSaturday,
 } from 'src/utils/create-contract-payment';
 import { ContractService } from '../services/contract.service';
+import { ValidatedJwt } from 'src/auth/decorators/validated-jwt.decorator';
+import { JwtPayloadDTO } from 'src/auth/dto/jwt.dto';
 
 @Controller('contract-payment')
 export class ContractPaymentController {
@@ -47,6 +49,27 @@ export class ContractPaymentController {
   @Get('overdue/customers-by-vendor')
   async getOverdueCustomersByVendor() {
     return this.service.getOverdueCustomersByVendor();
+  }
+
+  @Get('vendor/can-request')
+  async canVendorRequest(
+    @ValidatedJwt() payload: JwtPayloadDTO,
+  ): Promise<boolean> {
+    const totalInstallments = await this.service.getTotalInstallmentsByVendor(
+      payload.sub,
+    );
+
+    if (totalInstallments === 0) {
+      return true;
+    }
+
+    const overdueInstallments = await this.service.getTotalOverdueByVendor(
+      payload.sub,
+    );
+
+    console.log({ totalInstallments, overdueInstallments });
+
+    return totalInstallments * 0.3 > overdueInstallments;
   }
 
   @Get(':id')

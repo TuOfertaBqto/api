@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ContractPayment } from '../entities/contract-payment.entity';
 import { Brackets, IsNull, MoreThan, Repository } from 'typeorm';
@@ -29,6 +34,7 @@ export class ContractPaymentService {
   constructor(
     @InjectRepository(ContractPayment)
     private readonly repo: Repository<ContractPayment>,
+    @Inject(forwardRef(() => ContractService))
     private readonly contractService: ContractService,
   ) {}
 
@@ -240,5 +246,42 @@ export class ContractPaymentService {
     );
 
     return Object.values(grouped);
+  }
+
+  async getTotalInstallmentsByVendor(vendorId: string): Promise<number> {
+    const result = await this.repo
+      .createQueryBuilder('cp')
+      .innerJoin('cp.contract', 'c')
+      .innerJoin('c.vendorId', 'v')
+      .where('v.id = :vendorId', { vendorId })
+      .select('SUM(cp.installmentAmount)', 'total')
+      .getRawOne<{ total: string }>();
+
+    return Number(result?.total ?? 0);
+  }
+
+  async getTotalOverdueByVendor(vendorId: string): Promise<number> {
+    const result = await this.repo
+      .createQueryBuilder('cp')
+      .innerJoin('cp.contract', 'c')
+      .innerJoin('c.vendorId', 'v')
+      .where('v.id = :vendorId', { vendorId })
+      .andWhere(`cp.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
+      .select(
+        'SUM(cp.installmentAmount - COALESCE(cp.amountPaid, 0))',
+        'totalDebt',
+      )
+      .getRawOne<{ totalDebt: string }>();
+
+    return Number(result?.totalDebt ?? 0);
+  }
+
+  async deleteByContractId(contractId: string): Promise<void> {
+    const payments = await this.repo.find({
+      where: { contract: { id: contractId } },
+    });
+    if (payments.length) {
+      await this.repo.softRemove(payments);
+    }
   }
 }
