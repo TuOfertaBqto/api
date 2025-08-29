@@ -9,6 +9,7 @@ export enum PaymentMethod {
   MOBILE_PAYMENT = 'mobile_payment',
   BANK_TRANSFER = 'bank_transfer',
   CASH = 'cash',
+  DISCOUNT = 'discount',
 }
 
 @Entity('contract_payment')
