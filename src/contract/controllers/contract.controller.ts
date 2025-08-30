@@ -18,12 +18,14 @@ import { JwtPayloadDTO } from 'src/auth/dto/jwt.dto';
 import { ValidatedJwt } from 'src/auth/decorators/validated-jwt.decorator';
 import { UserRole } from 'src/user/entities/user.entity';
 import { Contract, ContractStatus } from '../entities/contract.entity';
+import { VendorCustomerService } from 'src/user/vendor-customer.service';
 
 @Controller('contract')
 export class ContractController {
   constructor(
     private readonly contractService: ContractService,
     private readonly contraProducService: ContractProductService,
+    private readonly vendorCustomerService: VendorCustomerService,
   ) {}
 
   @Post()
@@ -49,6 +51,18 @@ export class ContractController {
         customerId,
       });
     } else {
+      if (vendorId) {
+        const exists =
+          await this.vendorCustomerService.findOneByVendorAndCustomer(
+            vendorId,
+            customerId,
+          );
+
+        if (!exists) {
+          await this.vendorCustomerService.create({ vendorId, customerId });
+        }
+      }
+
       contract = await this.contractService.create({
         ...contractData,
         vendorId,
