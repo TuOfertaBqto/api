@@ -57,6 +57,20 @@ export class VendorCustomerService {
     return await this.vendorCustomerRepo.save(relation);
   }
 
+  async findOneByVendorAndCustomer(
+    vendorId: string,
+    customerId: string,
+  ): Promise<VendorCustomer | null> {
+    const relation = await this.vendorCustomerRepo.findOne({
+      where: {
+        vendor: { id: vendorId },
+        customer: { id: customerId },
+      },
+    });
+
+    return relation;
+  }
+
   async remove(vendorId: string, customerId: string): Promise<void> {
     const relation = await this.vendorCustomerRepo.findOne({
       where: {
@@ -86,19 +100,4 @@ export class VendorCustomerService {
 
     return relations.map((r) => r.customer);
   }
-
-  //   async findVendorsByCustomer(customerId: string): Promise<User[]> {
-  //     const customer = await this.userService.findOne(customerId);
-
-  //     if (!customer || customer.role !== UserRole.CUSTOMER) {
-  //       throw new NotFoundException('Cliente no válido');
-  //     }
-
-  //     const relations = await this.vendorCustomerRepo.find({
-  //       where: { customer: { id: customerId } },
-  //       relations: ['vendor'],
-  //     });
-
-  //     return relations.map((r) => r.vendor);
-  //   }
 }
