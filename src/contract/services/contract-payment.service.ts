@@ -29,6 +29,13 @@ type RawRow = {
   overdueNumbers: string;
 };
 
+type VendorPaymentsTotals = {
+  totalAmountPaid: number;
+  totalOverdueDebt: number;
+  totalPendingBalance: number;
+  totalDebt: number;
+};
+
 @Injectable()
 export class ContractPaymentService {
   constructor(
@@ -320,6 +327,47 @@ export class ContractPaymentService {
       .addGroupBy('vendor.firstName')
       .addGroupBy('vendor.lastName')
       .getRawMany();
+  }
+
+  async getGlobalPaymentsSummary(): Promise<VendorPaymentsTotals> {
+    const result = await this.repo
+      .createQueryBuilder('payment')
+      .select('SUM(COALESCE(payment.amount_paid, 0))', 'totalAmountPaid')
+      .addSelect(
+        `SUM(
+        CASE 
+          WHEN payment.due_date < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'
+           AND payment.paid_at IS NULL 
+          THEN (payment.installment_amount - COALESCE(payment.amount_paid, 0)) 
+          ELSE 0 
+        END
+      )`,
+        'totalOverdueDebt',
+      )
+      .addSelect(
+        `SUM(
+        CASE 
+          WHEN payment.due_date >= CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'
+           AND payment.paid_at IS NULL 
+          THEN (payment.installment_amount - COALESCE(payment.amount_paid, 0)) 
+          ELSE 0 
+        END
+      )`,
+        'totalPendingBalance',
+      )
+      .addSelect(
+        `SUM(
+        CASE 
+          WHEN payment.paid_at IS NULL 
+          THEN (payment.installment_amount - COALESCE(payment.amount_paid, 0)) 
+          ELSE 0 
+        END
+      )`,
+        'totalDebt',
+      )
+      .getRawOne<VendorPaymentsTotals>();
+
+    return result as VendorPaymentsTotals;
   }
 
   async deleteByContractId(contractId: string): Promise<void> {
