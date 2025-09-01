@@ -51,6 +51,11 @@ export class ContractPaymentController {
     return this.service.getOverdueCustomersByVendor();
   }
 
+  @Get('vendor/payments-summary')
+  async getVendorPaymentsSummary() {
+    return this.service.getVendorPaymentsSummary();
+  }
+
   @Get('vendor/can-request')
   async canVendorRequest(
     @ValidatedJwt() payload: JwtPayloadDTO,

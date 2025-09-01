@@ -276,6 +276,52 @@ export class ContractPaymentService {
     return Number(result?.totalDebt ?? 0);
   }
 
+  async getVendorPaymentsSummary() {
+    return this.repo
+      .createQueryBuilder('payment')
+      .select('vendor.id', 'vendorId')
+      .addSelect('vendor.code', 'vendorCode')
+      .addSelect('vendor.firstName', 'firstName')
+      .addSelect('vendor.lastName', 'lastName')
+      .addSelect('SUM(COALESCE(payment.amount_paid, 0))', 'totalAmountPaid')
+      .addSelect(
+        `SUM(
+          CASE 
+            WHEN payment.due_date < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas' AND payment.paid_at IS NULL 
+            THEN (payment.installment_amount - COALESCE(payment.amount_paid, 0)) 
+            ELSE 0 
+          END
+        )`,
+        'totalOverdueDebt',
+      )
+      .addSelect(
+        `SUM(
+          CASE 
+            WHEN payment.due_date >= CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas' AND payment.paid_at IS NULL 
+            THEN (payment.installment_amount - COALESCE(payment.amount_paid, 0)) 
+            ELSE 0 
+          END
+        )`,
+        'totalPendingBalance',
+      )
+      .addSelect(
+        `SUM(
+          CASE 
+            WHEN payment.paid_at IS NULL 
+            THEN (payment.installment_amount - COALESCE(payment.amount_paid, 0)) 
+            ELSE 0 
+          END
+        )`,
+        'totalDebt',
+      )
+      .innerJoin('payment.contract', 'contract')
+      .innerJoin('contract.vendorId', 'vendor')
+      .groupBy('vendor.id')
+      .addGroupBy('vendor.firstName')
+      .addGroupBy('vendor.lastName')
+      .getRawMany();
+  }
+
   async deleteByContractId(contractId: string): Promise<void> {
     const payments = await this.repo.find({
       where: { contract: { id: contractId } },
