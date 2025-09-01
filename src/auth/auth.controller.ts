@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Get,
+  NotFoundException,
   Post,
   Req,
 } from '@nestjs/common';
@@ -51,6 +52,16 @@ export class AuthController {
     const origin = req.headers['origin'];
     const { email } = forgotPasswordDto;
     const user = await this.userService.findByEmail(email);
+
+    if (!user) {
+      throw new NotFoundException('El usuario no existe');
+    }
+
+    if (!user.password) {
+      throw new BadRequestException(
+        'Este usuario no tiene contraseña registrada, use otro método de acceso',
+      );
+    }
 
     const token = await this.jwtService.signAsync(
       { sub: user.id, role: user.role, email: user.email },
