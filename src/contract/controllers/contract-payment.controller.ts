@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -20,6 +21,7 @@ import {
 import { ContractService } from '../services/contract.service';
 import { ValidatedJwt } from 'src/auth/decorators/validated-jwt.decorator';
 import { JwtPayloadDTO } from 'src/auth/dto/jwt.dto';
+import { UserRole } from 'src/user/entities/user.entity';
 
 @Controller('contract-payment')
 export class ContractPaymentController {
@@ -80,6 +82,26 @@ export class ContractPaymentController {
     console.log({ totalInstallments, overdueInstallments });
 
     return totalInstallments * 0.3 > overdueInstallments;
+  }
+
+  @Get('vendor/:id/payments-summary')
+  async getOneVendorPaymentsSummary(
+    @Param('id') id: string,
+    @ValidatedJwt() payload: JwtPayloadDTO,
+  ) {
+    let vendorId: string;
+
+    if (payload.role === UserRole.MAIN || payload.role === UserRole.ADMIN) {
+      vendorId = id;
+    } else {
+      if (payload.sub !== id) {
+        throw new ForbiddenException(
+          'No puedes consultar pagos de otro vendedor',
+        );
+      }
+      vendorId = payload.sub;
+    }
+    return this.service.getOneVendorPaymentsSummary(vendorId);
   }
 
   @Get(':id')
