@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   HttpException,
   HttpStatus,
@@ -105,6 +106,23 @@ export class UserController {
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const user = await this.userService.findOne(id);
+    return instanceToPlain(user) as ResponseUserDTO;
+  }
+
+  @Get('profile/:id')
+  async getProfile(
+    @ValidatedJwt() payload: JwtPayloadDTO,
+    @Param('id') id: string,
+  ) {
+    let user: User;
+    if (payload.role === UserRole.MAIN || payload.role === UserRole.ADMIN) {
+      user = await this.userService.findOne(id);
+    } else {
+      if (payload.sub !== id) {
+        throw new ForbiddenException('No puedes ver el perfil de otro usuario');
+      }
+      user = await this.userService.findOne(payload.sub);
+    }
     return instanceToPlain(user) as ResponseUserDTO;
   }
 
