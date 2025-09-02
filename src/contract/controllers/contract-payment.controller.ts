@@ -84,6 +84,26 @@ export class ContractPaymentController {
     return totalInstallments * 0.3 > overdueInstallments;
   }
 
+  @Get('overdue/:id/customers-by-vendor')
+  async getOverdueCustomersByOneVendor(
+    @Param('id') id: string,
+    @ValidatedJwt() payload: JwtPayloadDTO,
+  ) {
+    let vendorId: string;
+
+    if (payload.role === UserRole.MAIN || payload.role === UserRole.ADMIN) {
+      vendorId = id;
+    } else {
+      if (payload.sub !== id) {
+        throw new ForbiddenException(
+          'No puedes consultar pagos de otro vendedor',
+        );
+      }
+      vendorId = payload.sub;
+    }
+    return this.service.getOverdueCustomersByOneVendor(vendorId);
+  }
+
   @Get('vendor/:id/payments-summary')
   async getOneVendorPaymentsSummary(
     @Param('id') id: string,
