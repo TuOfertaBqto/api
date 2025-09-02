@@ -120,6 +120,40 @@ export class ContractController {
     };
   }
 
+  @Get('vendor/count/:id')
+  async countContractsByVendor(
+    @Param('id') id: string,
+    @ValidatedJwt() payload: JwtPayloadDTO,
+  ) {
+    let vendorId: string;
+
+    if (payload.role === UserRole.MAIN || payload.role === UserRole.ADMIN) {
+      vendorId = id;
+    } else {
+      if (payload.sub !== id) {
+        throw new ForbiddenException(
+          'No puedes consultar contratos de otro vendedor',
+        );
+      }
+      vendorId = payload.sub;
+    }
+
+    const actives = await this.contractService.countActiveContracts(vendorId);
+    const toDispatch =
+      await this.contractService.countPendingDispatch(vendorId);
+    const canceled =
+      await this.contractService.countCanceledContracts(vendorId);
+    const completed =
+      await this.contractService.countCompletedContracts(vendorId);
+
+    return {
+      activeContracts: actives,
+      pendingToDispatch: toDispatch,
+      canceledContracts: canceled,
+      completedContracts: completed,
+    };
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.contractService.findOne(id);
