@@ -59,6 +59,9 @@ export class ResponseUserDTO extends IntersectionType(CreateUserDTO, BaseDTO) {}
 
 export class VendorStatsDTO {
   @IsString()
+  id: string;
+
+  @IsString()
   code: string;
 
   @IsString()
