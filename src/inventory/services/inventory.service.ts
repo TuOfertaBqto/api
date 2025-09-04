@@ -18,6 +18,7 @@ export class InventoryService {
     return this.inventoryRepo
       .createQueryBuilder('inventory')
       .leftJoinAndSelect('inventory.product', 'product')
+      .where('product.isVisible = :isVisible', { isVisible: true })
       .orderBy('product.name', 'ASC')
       .getMany();
   }

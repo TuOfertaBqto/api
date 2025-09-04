@@ -179,36 +179,40 @@ export class ContractService {
     await this.contractRepo.softRemove(contract);
   }
 
-  async countActiveContracts(): Promise<number> {
+  async countActiveContracts(vendorId?: string): Promise<number> {
     return this.contractRepo.count({
       where: {
         startDate: Not(IsNull()),
         endDate: IsNull(),
+        ...(vendorId ? { vendorId: { id: vendorId } } : {}),
       },
     });
   }
 
-  async countPendingDispatch(): Promise<number> {
+  async countPendingDispatch(vendorId?: string): Promise<number> {
     return this.contractRepo.count({
       where: {
         startDate: IsNull(),
         status: ContractStatus.APPROVED,
+        ...(vendorId ? { vendorId: { id: vendorId } } : {}),
       },
     });
   }
 
-  async countCanceledContracts(): Promise<number> {
+  async countCanceledContracts(vendorId?: string): Promise<number> {
     return this.contractRepo.count({
       where: {
         status: ContractStatus.CANCELED,
+        ...(vendorId ? { vendorId: { id: vendorId } } : {}),
       },
     });
   }
 
-  async countCompletedContracts(): Promise<number> {
+  async countCompletedContracts(vendorId?: string): Promise<number> {
     return this.contractRepo.count({
       where: {
         endDate: Not(IsNull()),
+        ...(vendorId ? { vendorId: { id: vendorId } } : {}),
       },
     });
   }

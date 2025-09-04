@@ -90,7 +90,8 @@ export class UserService {
       .createQueryBuilder('vendor')
       .leftJoin('vendor.contracts', 'contract')
       .where('vendor.code IS NOT NULL')
-      .select('vendor.code', 'code')
+      .select('vendor.id', 'id')
+      .addSelect('vendor.code', 'code')
       .addSelect("vendor.firstName || ' ' || vendor.lastName", 'vendorName')
       .addSelect(
         `COUNT(CASE 
