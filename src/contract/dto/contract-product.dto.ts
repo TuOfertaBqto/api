@@ -43,3 +43,11 @@ export class CreateContractProductDTO {
 export class UpdateContractProductDTO extends PartialType(
   CreateContractProductDTO,
 ) {}
+
+export class BulkUpdateContractProductDTO extends PartialType(
+  CreateContractProductDTO,
+) {
+  @IsUUID()
+  @IsOptional()
+  id?: string;
+}
