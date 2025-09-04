@@ -19,6 +19,7 @@ import { ValidatedJwt } from 'src/auth/decorators/validated-jwt.decorator';
 import { UserRole } from 'src/user/entities/user.entity';
 import { Contract, ContractStatus } from '../entities/contract.entity';
 import { VendorCustomerService } from 'src/user/vendor-customer.service';
+import { CreateContractProductDTO } from '../dto/contract-product.dto';
 
 @Controller('contract')
 export class ContractController {
@@ -70,11 +71,13 @@ export class ContractController {
       });
     }
 
-    const contractProducts = products.map((p) => ({
+    const contractProducts: CreateContractProductDTO[] = products.map((p) => ({
       contractId: contract.id,
       productId: p.productId,
       quantity: p.quantity,
       status: p.status,
+      price: p.price,
+      installmentAmount: p.installmentAmount,
     }));
 
     await this.contraProducService.create(contractProducts);
