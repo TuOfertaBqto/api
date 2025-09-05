@@ -79,7 +79,18 @@ export class ContractProductService {
   async updateMany(
     dtos: BulkUpdateContractProductDTO[],
   ): Promise<ContractProduct[]> {
-    return this.contractProductRepo.save(dtos);
+    const entities = dtos.map((dto) => {
+      const entity = this.contractProductRepo.create({
+        ...dto,
+        contract: dto.contractId
+          ? ({ id: dto.contractId } as Contract)
+          : undefined,
+        product: dto.productId ? ({ id: dto.productId } as Product) : undefined,
+      });
+      return entity;
+    });
+
+    return this.contractProductRepo.save(entities);
   }
 
   async remove(id: string): Promise<void> {
