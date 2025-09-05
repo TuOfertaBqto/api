@@ -30,8 +30,24 @@ export class CreateContractProductDTO {
   @IsEnum(ContractProductStatus)
   @IsOptional()
   status?: ContractProductStatus;
+
+  @IsInt()
+  @Min(1)
+  price: number;
+
+  @IsInt()
+  @Min(1)
+  installmentAmount: number;
 }
 
 export class UpdateContractProductDTO extends PartialType(
   CreateContractProductDTO,
 ) {}
+
+export class BulkUpdateContractProductDTO extends PartialType(
+  CreateContractProductDTO,
+) {
+  @IsUUID()
+  @IsOptional()
+  id?: string;
+}

@@ -6,6 +6,7 @@ import {
 } from '../entities/contract-product.entity';
 import { Repository } from 'typeorm';
 import {
+  BulkUpdateContractProductDTO,
   CreateContractProductDTO,
   UpdateContractProductDTO,
 } from '../dto/contract-product.dto';
@@ -73,6 +74,23 @@ export class ContractProductService {
     if (dto.status) item.status = dto.status;
 
     return this.contractProductRepo.save(item);
+  }
+
+  async updateMany(
+    dtos: BulkUpdateContractProductDTO[],
+  ): Promise<ContractProduct[]> {
+    const entities = dtos.map((dto) => {
+      const entity = this.contractProductRepo.create({
+        ...dto,
+        contract: dto.contractId
+          ? ({ id: dto.contractId } as Contract)
+          : undefined,
+        product: dto.productId ? ({ id: dto.productId } as Product) : undefined,
+      });
+      return entity;
+    });
+
+    return this.contractProductRepo.save(entities);
   }
 
   async remove(id: string): Promise<void> {

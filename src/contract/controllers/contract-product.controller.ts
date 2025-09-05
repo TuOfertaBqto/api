@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ContractProductService } from '../services/contract-product.service';
 import {
+  BulkUpdateContractProductDTO,
   CreateContractProductDTO,
   UpdateContractProductDTO,
 } from '../dto/contract-product.dto';
@@ -36,6 +37,11 @@ export class ContractProductController {
   @Post()
   create(@Body() dto: CreateContractProductDTO[]) {
     return this.service.create(dto);
+  }
+
+  @Patch()
+  async updateMany(@Body() dtos: BulkUpdateContractProductDTO[]) {
+    return this.service.updateMany(dtos);
   }
 
   @Patch(':id')

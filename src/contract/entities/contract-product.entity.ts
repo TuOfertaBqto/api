@@ -32,4 +32,10 @@ export class ContractProduct extends BaseModel {
     name: 'status',
   })
   status: ContractProductStatus;
+
+  @Column({ type: 'int', name: 'price', default: 0 })
+  price: number;
+
+  @Column({ type: 'int', name: 'installment_amount', default: 0 })
+  installmentAmount: number;
 }

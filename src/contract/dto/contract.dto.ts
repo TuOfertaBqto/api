@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Min,
   ValidateNested,
 } from 'class-validator';
 import { Agreement, ContractStatus } from '../entities/contract.entity';
@@ -24,6 +25,14 @@ class ContractProductDTO {
 
   @IsEnum(ContractProductStatus)
   status: ContractProductStatus;
+
+  @IsInt()
+  @Min(1)
+  price: number;
+
+  @IsInt()
+  @Min(1)
+  installmentAmount: number;
 }
 
 export class CreateContractDTO {
