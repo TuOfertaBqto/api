@@ -96,6 +96,12 @@ export class UserController {
     return users.map((user) => instanceToPlain(user));
   }
 
+  @Get('vendors')
+  async findAllVendor() {
+    const vendors = await this.userService.findAll(UserRole.VENDOR);
+    return vendors.map((user) => instanceToPlain(user));
+  }
+
   @Get('vendor-stats')
   async getVendorsContractsStats(): Promise<VendorStatsDTO[]> {
     const stats = await this.userService.getVendorsWithContractsStats();
