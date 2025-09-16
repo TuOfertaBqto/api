@@ -43,11 +43,6 @@ export class ContractPaymentController {
     return this.service.createMany(payments);
   }
 
-  @Get()
-  findAll() {
-    return this.service.findAll();
-  }
-
   @Get('overdue/customers-by-vendor')
   async getOverdueCustomersByVendor() {
     return this.service.getOverdueCustomersByVendor();
@@ -82,6 +77,11 @@ export class ContractPaymentController {
     console.log({ totalInstallments, overdueInstallments });
 
     return totalInstallments * 0.3 > overdueInstallments;
+  }
+
+  @Get('vendor/:vendorId')
+  findAllByVendor(@Param('vendorId') vendorId: string) {
+    return this.service.findAll(vendorId);
   }
 
   @Get('overdue/:id/customers-by-vendor')

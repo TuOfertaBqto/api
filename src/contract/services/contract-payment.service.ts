@@ -63,7 +63,7 @@ export class ContractPaymentService {
     return this.repo.save(payments);
   }
 
-  async findAll(): Promise<ContractPayment[]> {
+  async findAll(vendorId: string): Promise<ContractPayment[]> {
     const subQuery = this.repo
       .createQueryBuilder('sub_cp')
       .select('MIN(sub_cp.due_date)', 'minDate')
@@ -78,16 +78,22 @@ export class ContractPaymentService {
       .leftJoinAndSelect('contract.customerId', 'customer')
       .where(
         new Brackets((qb) => {
-          qb.where('cp.paid_at IS NULL').andWhere(
-            `cp.due_date = (${subQuery.getQuery()})`,
+          qb.where(
+            new Brackets((qb2) => {
+              qb2
+                .where('cp.paid_at IS NULL')
+                .andWhere(`cp.due_date = (${subQuery.getQuery()})`);
+            }),
+          ).orWhere(
+            new Brackets((qb2) => {
+              qb2
+                .where('cp.paid_at IS NULL')
+                .andWhere('cp.due_date < CURRENT_DATE');
+            }),
           );
         }),
       )
-      .orWhere(
-        new Brackets((qb) => {
-          qb.where('cp.paid_at IS NULL').andWhere('cp.due_date < CURRENT_DATE');
-        }),
-      )
+      .andWhere('contract.vendorId = :vendorId', { vendorId })
       .orderBy('cp.due_date', 'ASC')
       .getMany();
 
