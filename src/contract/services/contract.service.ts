@@ -48,7 +48,7 @@ export class ContractService {
     return this.contractRepo.save(contract);
   }
 
-  async findAll(): Promise<Contract[]> {
+  async findAll(vendorId: string): Promise<Contract[]> {
     const contracts = await this.contractRepo
       .createQueryBuilder('contract')
       .leftJoinAndSelect('contract.vendorId', 'vendor')
@@ -56,6 +56,7 @@ export class ContractService {
       .leftJoinAndSelect('contract.products', 'contractProduct')
       .leftJoinAndSelect('contractProduct.product', 'product')
       .where('contract.status = :status', { status: ContractStatus.APPROVED })
+      .andWhere('contract.vendorId = :vendorId', { vendorId })
       .addSelect(
         `
       CASE

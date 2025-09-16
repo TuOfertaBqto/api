@@ -85,11 +85,6 @@ export class ContractController {
     return this.contractService.findOne(contract.id);
   }
 
-  @Get()
-  findAll() {
-    return this.contractService.findAll();
-  }
-
   @Get('request')
   async findRequests(
     @ValidatedJwt() payload: JwtPayloadDTO,
@@ -121,6 +116,11 @@ export class ContractController {
       canceledContracts: canceled,
       completedContracts: completed,
     };
+  }
+
+  @Get('vendor/:vendorId')
+  findAll(@Param('vendorId') vendorId: string) {
+    return this.contractService.findAll(vendorId);
   }
 
   @Get('vendor/count/:id')
