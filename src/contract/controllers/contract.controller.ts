@@ -5,8 +5,10 @@ import {
   ForbiddenException,
   Get,
   Param,
+  ParseEnumPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ContractService } from '../services/contract.service';
 import {
@@ -121,6 +123,14 @@ export class ContractController {
   @Get('vendor/:vendorId')
   findAll(@Param('vendorId') vendorId: string) {
     return this.contractService.findAll(vendorId);
+  }
+
+  @Get('status/:status')
+  async findAllByStatus(
+    @Param('status', new ParseEnumPipe(ContractStatus)) status: ContractStatus,
+    @Query('type') type?: 'to_dispatch' | 'dispatched' | 'completed',
+  ) {
+    return this.contractService.findAllByStatus(status, type);
   }
 
   @Get('vendor/count/:id')

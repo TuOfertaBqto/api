@@ -124,6 +124,37 @@ export class ContractService {
     return instanceToPlain(contracts) as Contract[];
   }
 
+  async findAllByStatus(
+    status: ContractStatus,
+    type?: 'to_dispatch' | 'dispatched' | 'completed',
+  ): Promise<Contract[]> {
+    let query = this.contractRepo
+      .createQueryBuilder('contract')
+      .leftJoinAndSelect('contract.vendorId', 'vendor')
+      .leftJoinAndSelect('contract.customerId', 'customer')
+      .leftJoinAndSelect('contract.products', 'contractProduct')
+      .leftJoinAndSelect('contractProduct.product', 'product')
+      .where('contract.status = :status', { status });
+
+    if (status === ContractStatus.APPROVED) {
+      if (type === 'to_dispatch') {
+        query = query.andWhere('contract.startDate IS NULL');
+      } else if (type === 'dispatched') {
+        query = query
+          .andWhere('contract.startDate IS NOT NULL')
+          .andWhere('contract.endDate IS NULL');
+      } else if (type === 'completed') {
+        query = query.andWhere('contract.endDate IS NOT NULL');
+      }
+    }
+
+    const contracts = await query
+      .orderBy('contract.createdAt', 'DESC')
+      .getMany();
+
+    return instanceToPlain(contracts) as Contract[];
+  }
+
   async findOne(id: string): Promise<Contract> {
     const contract = await this.contractRepo.findOne({
       where: { id },
