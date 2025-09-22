@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ContractPayment } from '../entities/contract-payment.entity';
-import { Brackets, IsNull, MoreThan, Repository } from 'typeorm';
+import { IsNull, MoreThan, Repository } from 'typeorm';
 import { ContractService } from './contract.service';
 import {
   CreateContractPaymentDTO,
@@ -64,38 +64,43 @@ export class ContractPaymentService {
   }
 
   async findAll(vendorId: string): Promise<ContractPayment[]> {
-    const subQuery = this.repo
-      .createQueryBuilder('sub_cp')
-      .select('MIN(sub_cp.due_date)', 'minDate')
-      .where('sub_cp.contract_id = cp.contract_id')
-      .andWhere('sub_cp.paid_at IS NULL')
-      .andWhere('sub_cp.due_date >= CURRENT_DATE');
-
-    const result = await this.repo
+    // Todos los vencidos
+    const expired = await this.repo
       .createQueryBuilder('cp')
       .innerJoinAndSelect('cp.contract', 'contract')
       .leftJoinAndSelect('contract.vendorId', 'vendor')
       .leftJoinAndSelect('contract.customerId', 'customer')
-      .where(
-        new Brackets((qb) => {
-          qb.where(
-            new Brackets((qb2) => {
-              qb2
-                .where('cp.paid_at IS NULL')
-                .andWhere(`cp.due_date = (${subQuery.getQuery()})`);
-            }),
-          ).orWhere(
-            new Brackets((qb2) => {
-              qb2
-                .where('cp.paid_at IS NULL')
-                .andWhere('cp.due_date < CURRENT_DATE');
-            }),
-          );
-        }),
-      )
-      .andWhere('contract.vendorId = :vendorId', { vendorId })
+      .where('contract.vendorId = :vendorId', { vendorId })
+      .andWhere('cp.paid_at IS NULL')
+      .andWhere('cp.due_date < CURRENT_DATE')
       .orderBy('cp.due_date', 'ASC')
       .getMany();
+
+    // Próximo a vencer por contrato
+    const next = await this.repo
+      .createQueryBuilder('cp')
+      .innerJoinAndSelect('cp.contract', 'contract')
+      .leftJoinAndSelect('contract.vendorId', 'vendor')
+      .leftJoinAndSelect('contract.customerId', 'customer')
+      .where('contract.vendorId = :vendorId', { vendorId })
+      .andWhere('cp.paid_at IS NULL')
+      .andWhere('cp.due_date = sub.min_due')
+      .innerJoin(
+        (qb) =>
+          qb
+            .select('cp2.contract_id', 'contract_id')
+            .addSelect('MIN(cp2.due_date)', 'min_due')
+            .from('contract_payment', 'cp2')
+            .where('cp2.paid_at IS NULL')
+            .andWhere('cp2.due_date >= CURRENT_DATE')
+            .groupBy('cp2.contract_id'),
+        'sub',
+        'sub.contract_id = cp.contract_id',
+      )
+      .orderBy('cp.due_date', 'ASC')
+      .getMany();
+
+    const result = [...expired, ...next];
 
     return plainToInstance(ContractPayment, result, {
       excludeExtraneousValues: false,
