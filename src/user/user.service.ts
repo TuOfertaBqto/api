@@ -45,13 +45,15 @@ export class UserService {
     if (role === UserRole.VENDOR) {
       users = await this.userRepository.find({
         where: [{ role: UserRole.VENDOR }, { code: Not(IsNull()) }],
+        order: { firstName: 'ASC' },
       });
     } else if (role) {
       users = await this.userRepository.find({
         where: { role },
+        order: { firstName: 'ASC' },
       });
     } else {
-      users = await this.userRepository.find();
+      users = await this.userRepository.find({ order: { firstName: 'ASC' } });
     }
 
     return users as User[];
