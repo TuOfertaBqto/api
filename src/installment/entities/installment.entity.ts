@@ -1,6 +1,6 @@
+import { Contract } from 'src/contract/entities/contract.entity';
 import { BaseModel } from 'src/utils/entity';
 import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
-import { Contract } from './contract.entity';
 
 export enum PaymentMethod {
   ZELLE = 'zelle',
@@ -12,8 +12,8 @@ export enum PaymentMethod {
   DISCOUNT = 'discount',
 }
 
-@Entity('contract_payment')
-export class ContractPayment extends BaseModel {
+@Entity('installment')
+export class Installment extends BaseModel {
   @ManyToOne(() => Contract)
   @JoinColumn({ name: 'contract_id' })
   contract: Contract;
