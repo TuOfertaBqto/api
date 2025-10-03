@@ -1,6 +1,7 @@
+import { InstallmentPayment } from 'src/installment/entities/installment-payment.entity';
 import { PaymentMethod } from 'src/installment/entities/installment.entity';
 import { BaseModel } from 'src/utils/entity';
-import { Column, Entity } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 
 @Entity('payment')
 export class Payment extends BaseModel {
@@ -31,4 +32,7 @@ export class Payment extends BaseModel {
 
   @Column({ type: 'timestamp', name: 'paid_at', nullable: true })
   paidAt: Date;
+
+  @OneToMany(() => InstallmentPayment, (ip) => ip.payment)
+  installmentPayments: InstallmentPayment[];
 }
