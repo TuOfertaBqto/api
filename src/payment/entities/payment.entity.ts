@@ -29,6 +29,6 @@ export class Payment extends BaseModel {
   })
   amount: number;
 
-  @Column({ type: 'timestamp', name: 'paid_at' })
+  @Column({ type: 'timestamp', name: 'paid_at', nullable: true })
   paidAt: Date;
 }
