@@ -8,6 +8,7 @@ export class Payment extends BaseModel {
   @Column({
     type: 'enum',
     enum: PaymentMethod,
+    enumName: 'payment_type_enum',
     name: 'type',
     nullable: true,
   })
