@@ -10,6 +10,7 @@ import { ProductModule } from './product/product.module';
 import { InventoryModule } from './inventory/inventory.module';
 import { EmailModule } from './email/email.module';
 import { InstallmentModule } from './installment/installment.module';
+import { PaymentModule } from './payment/payment.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { InstallmentModule } from './installment/installment.module';
     InventoryModule,
     EmailModule,
     InstallmentModule,
+    PaymentModule,
   ],
   controllers: [AppController],
   providers: [AppService],
