@@ -1,6 +1,7 @@
 import { BaseModel } from 'src/utils/entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { Contract } from 'src/contract/entities/contract.entity';
+import { InstallmentPayment } from './installment-payment.entity';
 
 export enum PaymentMethod {
   ZELLE = 'zelle',
@@ -62,4 +63,7 @@ export class Installment extends BaseModel {
     nullable: true,
   })
   debt: number;
+
+  @OneToMany(() => InstallmentPayment, (ip) => ip.installment)
+  installmentPayments: InstallmentPayment[];
 }
