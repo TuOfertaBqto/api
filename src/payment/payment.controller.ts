@@ -7,15 +7,15 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { Payment } from './entities/payment.entity';
 import { PaymentService } from './payment.service';
+import { CreatePaymentDTO, UpdatePaymentDTO } from './dto/payment.dto';
 
 @Controller('payment')
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
   @Post()
-  create(@Body() data: Partial<Payment>) {
+  create(@Body() data: CreatePaymentDTO) {
     return this.paymentService.create(data);
   }
 
@@ -30,7 +30,7 @@ export class PaymentController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() data: Partial<Payment>) {
+  update(@Param('id') id: string, @Body() data: UpdatePaymentDTO) {
     return this.paymentService.update(id, data);
   }
 
