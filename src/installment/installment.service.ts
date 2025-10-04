@@ -5,15 +5,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ContractPayment } from '../entities/contract-payment.entity';
 import { IsNull, MoreThan, Repository } from 'typeorm';
-import { ContractService } from './contract.service';
+import { ContractService } from '../contract/services/contract.service';
 import {
-  CreateContractPaymentDTO,
-  UpdateContractPaymentDTO,
+  CreateInstallmentDTO,
+  UpdateInstallmentDTO,
   VendorsWithDebtsDTO,
-} from '../dto/contract-payment.dto';
+} from './dto/installment.dto';
 import { plainToInstance } from 'class-transformer';
+import { Installment } from './entities/installment.entity';
 type RawRow = {
   vendorId: string;
   code: string;
@@ -28,14 +28,12 @@ type RawRow = {
   overdueAmount: string;
   overdueNumbers: string;
 };
-
 type VendorPaymentsTotals = {
   totalAmountPaid: number;
   totalOverdueDebt: number;
   totalPendingBalance: number;
   totalDebt: number;
 };
-
 type VendorPaymentsSummary = {
   vendorId: string;
   vendorCode: number;
@@ -48,79 +46,75 @@ type VendorPaymentsSummary = {
 };
 
 @Injectable()
-export class ContractPaymentService {
+export class InstallmentService {
   constructor(
-    @InjectRepository(ContractPayment)
-    private readonly repo: Repository<ContractPayment>,
+    @InjectRepository(Installment)
+    private readonly repo: Repository<Installment>,
     @Inject(forwardRef(() => ContractService))
     private readonly contractService: ContractService,
   ) {}
 
-  async createMany(
-    data: CreateContractPaymentDTO[],
-  ): Promise<ContractPayment[]> {
+  async createMany(data: CreateInstallmentDTO[]): Promise<Installment[]> {
     const payments = this.repo.create(data);
     return this.repo.save(payments);
   }
 
-  async findAll(vendorId: string): Promise<ContractPayment[]> {
+  async findAll(vendorId: string): Promise<Installment[]> {
     // Todos los vencidos
     const expired = await this.repo
-      .createQueryBuilder('cp')
-      .innerJoinAndSelect('cp.contract', 'contract')
+      .createQueryBuilder('i')
+      .innerJoinAndSelect('i.contract', 'contract')
       .leftJoinAndSelect('contract.vendorId', 'vendor')
       .leftJoinAndSelect('contract.customerId', 'customer')
       .where('contract.vendorId = :vendorId', { vendorId })
-      .andWhere('cp.paid_at IS NULL')
-      .andWhere('cp.due_date < CURRENT_DATE')
-      .orderBy('cp.due_date', 'ASC')
+      .andWhere('i.paid_at IS NULL')
+      .andWhere('i.due_date < CURRENT_DATE')
+      .orderBy('i.due_date', 'ASC')
       .getMany();
 
     // Próximo a vencer por contrato
     const next = await this.repo
-      .createQueryBuilder('cp')
-      .innerJoinAndSelect('cp.contract', 'contract')
+      .createQueryBuilder('i')
+      .innerJoinAndSelect('i.contract', 'contract')
       .leftJoinAndSelect('contract.vendorId', 'vendor')
       .leftJoinAndSelect('contract.customerId', 'customer')
       .where('contract.vendorId = :vendorId', { vendorId })
-      .andWhere('cp.paid_at IS NULL')
-      .andWhere('cp.due_date = sub.min_due')
+      .andWhere('i.paid_at IS NULL')
+      .andWhere('i.due_date = sub.min_due')
       .innerJoin(
         (qb) =>
           qb
             .select('cp2.contract_id', 'contract_id')
             .addSelect('MIN(cp2.due_date)', 'min_due')
-            .from('contract_payment', 'cp2')
+            .from('installment', 'cp2')
             .where('cp2.paid_at IS NULL')
             .andWhere('cp2.due_date >= CURRENT_DATE')
             .groupBy('cp2.contract_id'),
         'sub',
-        'sub.contract_id = cp.contract_id',
+        'sub.contract_id = i.contract_id',
       )
-      .orderBy('cp.due_date', 'ASC')
+      .orderBy('i.due_date', 'ASC')
       .getMany();
 
     const result = [...expired, ...next];
 
-    return plainToInstance(ContractPayment, result, {
+    return plainToInstance(Installment, result, {
       excludeExtraneousValues: false,
     });
   }
 
-  async findOne(id: string): Promise<ContractPayment> {
+  async findOne(id: string): Promise<Installment> {
     const payment = await this.repo.findOne({
       where: { id },
       relations: ['contract'],
     });
-
     if (!payment) {
       throw new NotFoundException(`Payment with ID ${id} not found`);
     }
-
     return payment;
   }
 
-  async findByContract(contractId: string): Promise<ContractPayment[]> {
+  async findByContract(contractId: string): Promise<Installment[]> {
     return this.repo.find({
       where: { contract: { id: contractId } },
       relations: ['contract'],
@@ -129,9 +123,9 @@ export class ContractPaymentService {
   }
 
   async passDebtToNextInstallment(
-    currentPayment: ContractPayment,
+    currentPayment: Installment,
     debt: number,
-  ): Promise<ContractPayment> {
+  ): Promise<Installment> {
     const nextPayment = await this.repo.findOne({
       where: {
         contract: { id: currentPayment.contract.id },
@@ -140,42 +134,36 @@ export class ContractPaymentService {
       },
       order: { dueDate: 'ASC' },
     });
-
     if (!nextPayment) throw new NotFoundException(`Payment with not found`);
-
     nextPayment.debt = (nextPayment.debt ?? 0) + debt;
     return await this.repo.save(nextPayment);
   }
 
   async update(
-    payment: ContractPayment,
-    dto: UpdateContractPaymentDTO,
-  ): Promise<ContractPayment> {
+    payment: Installment,
+    dto: UpdateInstallmentDTO,
+  ): Promise<Installment> {
     if (dto.contract?.id) {
       const contract = await this.contractService.findOne(dto.contract.id);
       payment.contract = contract;
     }
-
     Object.assign(payment, { ...dto });
-
     return this.repo.save(payment);
   }
-
   async remove(id: string): Promise<void> {
     await this.repo.softDelete(id);
   }
-
   async getOverdueCustomersByVendor(): Promise<VendorsWithDebtsDTO[]> {
     // Subquery A: todas las cuotas numeradas
     const installmentsSubQuery = this.repo
-      .createQueryBuilder('cp')
-      .select('cp.id', 'paymentId')
+      .createQueryBuilder('i')
+      .select('i.id', 'paymentId')
       .addSelect('c.id', 'contractId')
       .addSelect(
-        'ROW_NUMBER() OVER (PARTITION BY c.id ORDER BY cp.dueDate)',
+        'ROW_NUMBER() OVER (PARTITION BY c.id ORDER BY i.dueDate)',
         'installmentNumber',
       )
-      .innerJoin('cp.contract', 'c');
+      .innerJoin('i.contract', 'c');
 
     // Subquery B: solo vencidas de la A
     const overdueNumbersSubQuery = this.repo
@@ -186,17 +174,17 @@ export class ContractPaymentService {
         'overdueNumbers',
       )
       .from('(' + installmentsSubQuery.getQuery() + ')', 'inner')
-      .innerJoin('contract_payment', 'cp', 'cp.id = "inner"."paymentId"')
-      .where(`cp.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
-      .andWhere('cp.paidAt IS NULL')
-      .andWhere('cp.deletedAt IS NULL')
+      .innerJoin('installment', 'i', 'i.id = "inner"."paymentId"')
+      .where(`i.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
+      .andWhere('i.paidAt IS NULL')
+      .andWhere('i.deletedAt IS NULL')
       .groupBy('"inner"."contractId"')
       .setParameters(installmentsSubQuery.getParameters());
 
     // Query principal
     const rows = await this.repo
-      .createQueryBuilder('cp')
-      .innerJoin('cp.contract', 'c')
+      .createQueryBuilder('i')
+      .innerJoin('i.contract', 'c')
       .innerJoin('c.vendorId', 'v')
       .innerJoin('c.customerId', 'cust')
       .leftJoin(
@@ -214,22 +202,21 @@ export class ContractPaymentService {
       .addSelect('cust.lastName', 'customerLastName')
       .addSelect('c.id', 'contractId')
       .addSelect('c.code', 'contractCode')
-      .addSelect('COUNT(cp.id)', 'overdueInstallments')
+      .addSelect('COUNT(i.id)', 'overdueInstallments')
       .addSelect(
-        'SUM(cp.installmentAmount - COALESCE(cp.amountPaid, 0))',
+        'SUM(i.installmentAmount - COALESCE(i.amountPaid, 0))',
         'overdueAmount',
       )
       .addSelect('sub."overdueNumbers"', 'overdueNumbers')
-      .where(`cp.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
-      .andWhere('cp.paidAt IS NULL')
-      .andWhere('cp.deletedAt IS NULL')
+      .where(`i.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
+      .andWhere('i.paidAt IS NULL')
+      .andWhere('i.deletedAt IS NULL')
       .groupBy(
         'v.id, v.code, v.firstName, v.lastName, cust.id, cust.firstName, cust.lastName, c.id, c.code, sub."overdueNumbers"',
       )
       .orderBy('cust.firstName', 'ASC')
       .addOrderBy('c.code', 'ASC')
       .getRawMany<RawRow>();
-
     // Agrupar en DTO
     const grouped = rows.reduce<Record<string, VendorsWithDebtsDTO>>(
       (acc, row) => {
@@ -241,9 +228,7 @@ export class ContractPaymentService {
             customers: [],
           };
         }
-
         const vendor = acc[row.vendorId];
-
         let customer = vendor.customers.find(
           (c) => c.customerId === row.customerId,
         );
@@ -255,7 +240,6 @@ export class ContractPaymentService {
           };
           vendor.customers.push(customer);
         }
-
         customer.contracts.push({
           contractId: row.contractId,
           contractCode: row.contractCode,
@@ -268,28 +252,25 @@ export class ContractPaymentService {
                 .sort((a, b) => a - b)
             : [],
         });
-
         return acc;
       },
       {},
     );
-
     return Object.values(grouped);
   }
-
   async getOverdueCustomersByOneVendor(
     vendorId: string,
   ): Promise<VendorsWithDebtsDTO | null> {
     // Subquery A: todas las cuotas numeradas
     const installmentsSubQuery = this.repo
-      .createQueryBuilder('cp')
-      .select('cp.id', 'paymentId')
+      .createQueryBuilder('i')
+      .select('i.id', 'paymentId')
       .addSelect('c.id', 'contractId')
       .addSelect(
-        'ROW_NUMBER() OVER (PARTITION BY c.id ORDER BY cp.dueDate)',
+        'ROW_NUMBER() OVER (PARTITION BY c.id ORDER BY i.dueDate)',
         'installmentNumber',
       )
-      .innerJoin('cp.contract', 'c');
+      .innerJoin('i.contract', 'c');
 
     // Subquery B: solo vencidas de la A
     const overdueNumbersSubQuery = this.repo
@@ -300,17 +281,17 @@ export class ContractPaymentService {
         'overdueNumbers',
       )
       .from('(' + installmentsSubQuery.getQuery() + ')', 'inner')
-      .innerJoin('contract_payment', 'cp', 'cp.id = "inner"."paymentId"')
-      .where(`cp.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
-      .andWhere('cp.paidAt IS NULL')
-      .andWhere('cp.deletedAt IS NULL')
+      .innerJoin('installment', 'i', 'i.id = "inner"."paymentId"')
+      .where(`i.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
+      .andWhere('i.paidAt IS NULL')
+      .andWhere('i.deletedAt IS NULL')
       .groupBy('"inner"."contractId"')
       .setParameters(installmentsSubQuery.getParameters());
 
     // Query principal
     const rows = await this.repo
-      .createQueryBuilder('cp')
-      .innerJoin('cp.contract', 'c')
+      .createQueryBuilder('i')
+      .innerJoin('i.contract', 'c')
       .innerJoin('c.vendorId', 'v')
       .innerJoin('c.customerId', 'cust')
       .leftJoin(
@@ -328,15 +309,15 @@ export class ContractPaymentService {
       .addSelect('cust.lastName', 'customerLastName')
       .addSelect('c.id', 'contractId')
       .addSelect('c.code', 'contractCode')
-      .addSelect('COUNT(cp.id)', 'overdueInstallments')
+      .addSelect('COUNT(i.id)', 'overdueInstallments')
       .addSelect(
-        'SUM(cp.installmentAmount - COALESCE(cp.amountPaid, 0))',
+        'SUM(i.installmentAmount - COALESCE(i.amountPaid, 0))',
         'overdueAmount',
       )
       .addSelect('sub."overdueNumbers"', 'overdueNumbers')
-      .where(`cp.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
-      .andWhere('cp.paidAt IS NULL')
-      .andWhere('cp.deletedAt IS NULL')
+      .where(`i.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
+      .andWhere('i.paidAt IS NULL')
+      .andWhere('i.deletedAt IS NULL')
       .andWhere('v.id = :vendorId', { vendorId })
       .groupBy(
         'v.id, v.code, v.firstName, v.lastName, cust.id, cust.firstName, cust.lastName, c.id, c.code, sub."overdueNumbers"',
@@ -344,7 +325,6 @@ export class ContractPaymentService {
       .orderBy('cust.firstName', 'ASC')
       .addOrderBy('c.code', 'ASC')
       .getRawMany<RawRow>();
-
     // Agrupar en DTO
     const grouped = rows.reduce<Record<string, VendorsWithDebtsDTO>>(
       (acc, row) => {
@@ -356,9 +336,7 @@ export class ContractPaymentService {
             customers: [],
           };
         }
-
         const vendor = acc[row.vendorId];
-
         let customer = vendor.customers.find(
           (c) => c.customerId === row.customerId,
         );
@@ -370,7 +348,6 @@ export class ContractPaymentService {
           };
           vendor.customers.push(customer);
         }
-
         customer.contracts.push({
           contractId: row.contractId,
           contractCode: row.contractCode,
@@ -383,22 +360,20 @@ export class ContractPaymentService {
                 .sort((a, b) => a - b)
             : [],
         });
-
         return acc;
       },
       {},
     );
-
     return Object.values(grouped)[0] ?? null;
   }
 
   async getTotalInstallmentsByVendor(vendorId: string): Promise<number> {
     const result = await this.repo
-      .createQueryBuilder('cp')
-      .innerJoin('cp.contract', 'c')
+      .createQueryBuilder('i')
+      .innerJoin('i.contract', 'c')
       .innerJoin('c.vendorId', 'v')
       .where('v.id = :vendorId', { vendorId })
-      .select('SUM(cp.installmentAmount)', 'total')
+      .select('SUM(i.installmentAmount)', 'total')
       .getRawOne<{ total: string }>();
 
     return Number(result?.total ?? 0);
@@ -406,20 +381,18 @@ export class ContractPaymentService {
 
   async getTotalOverdueByVendor(vendorId: string): Promise<number> {
     const result = await this.repo
-      .createQueryBuilder('cp')
-      .innerJoin('cp.contract', 'c')
+      .createQueryBuilder('i')
+      .innerJoin('i.contract', 'c')
       .innerJoin('c.vendorId', 'v')
       .where('v.id = :vendorId', { vendorId })
-      .andWhere(`cp.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
+      .andWhere(`i.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
       .select(
-        'SUM(cp.installmentAmount - COALESCE(cp.amountPaid, 0))',
+        'SUM(i.installmentAmount - COALESCE(i.amountPaid, 0))',
         'totalDebt',
       )
       .getRawOne<{ totalDebt: string }>();
-
     return Number(result?.totalDebt ?? 0);
   }
-
   async getOneVendorPaymentsSummary(vendorId: string) {
     return this.repo
       .createQueryBuilder('payment')
@@ -473,7 +446,6 @@ export class ContractPaymentService {
       .addGroupBy('vendor.lastName')
       .getRawOne<VendorPaymentsSummary>();
   }
-
   async getVendorPaymentsSummary() {
     return this.repo
       .createQueryBuilder('payment')
@@ -519,7 +491,6 @@ export class ContractPaymentService {
       .addGroupBy('vendor.lastName')
       .getRawMany();
   }
-
   async getGlobalPaymentsSummary(): Promise<VendorPaymentsTotals> {
     const result = await this.repo
       .createQueryBuilder('payment')
@@ -557,10 +528,8 @@ export class ContractPaymentService {
         'totalDebt',
       )
       .getRawOne<VendorPaymentsTotals>();
-
     return result as VendorPaymentsTotals;
   }
-
   async deleteByContractId(contractId: string): Promise<void> {
     const payments = await this.repo.find({
       where: { contract: { id: contractId } },

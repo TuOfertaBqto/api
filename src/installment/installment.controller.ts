@@ -9,29 +9,29 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ContractPaymentService } from '../services/contract-payment.service';
+import { InstallmentService } from './installment.service';
+import { ContractService } from 'src/contract/services/contract.service';
 import {
-  CreateListContractPaymentDTO,
-  UpdateContractPaymentDTO,
-} from '../dto/contract-payment.dto';
+  CreateListInstallmentDTO,
+  UpdateInstallmentDTO,
+} from './dto/installment.dto';
 import {
   generateInstallments,
   getNextSaturday,
 } from 'src/utils/create-contract-payment';
-import { ContractService } from '../services/contract.service';
 import { ValidatedJwt } from 'src/auth/decorators/validated-jwt.decorator';
 import { JwtPayloadDTO } from 'src/auth/dto/jwt.dto';
 import { UserRole } from 'src/user/entities/user.entity';
 
-@Controller('contract-payment')
-export class ContractPaymentController {
+@Controller('installment')
+export class InstallmentController {
   constructor(
-    private readonly service: ContractPaymentService,
+    private readonly service: InstallmentService,
     private readonly contractService: ContractService,
   ) {}
 
   @Post()
-  create(@Body() dto: CreateListContractPaymentDTO) {
+  create(@Body() dto: CreateListInstallmentDTO) {
     const firstDueDate = getNextSaturday(dto.startContract);
     const payments = generateInstallments(
       dto.contractId,
@@ -135,7 +135,7 @@ export class ContractPaymentController {
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() dto: UpdateContractPaymentDTO) {
+  async update(@Param('id') id: string, @Body() dto: UpdateInstallmentDTO) {
     if (!dto.amountPaid || dto.amountPaid <= 0) {
       throw new BadRequestException('El monto pagado debe ser mayor a 0');
     }

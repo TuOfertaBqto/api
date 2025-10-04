@@ -11,12 +11,12 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { PaymentMethod } from '../entities/contract-payment.entity';
+import { PaymentMethod } from '../entities/installment.entity';
 import { PartialType } from '@nestjs/mapped-types';
-import { Agreement, Contract } from '../entities/contract.entity';
+import { Agreement, Contract } from 'src/contract/entities/contract.entity';
 import { Type } from 'class-transformer';
 
-export class CreateContractPaymentDTO {
+export class CreateInstallmentDTO {
   @ValidateNested()
   @Type(() => Contract)
   contract: { id: string };
@@ -70,7 +70,7 @@ class ProductPaymentDTO {
   quantity: number;
 }
 
-export class CreateListContractPaymentDTO {
+export class CreateListInstallmentDTO {
   @IsUUID()
   contractId: string;
 
@@ -87,9 +87,7 @@ export class CreateListContractPaymentDTO {
   products: ProductPaymentDTO[];
 }
 
-export class UpdateContractPaymentDTO extends PartialType(
-  CreateContractPaymentDTO,
-) {}
+export class UpdateInstallmentDTO extends PartialType(CreateInstallmentDTO) {}
 
 class ContractDebt {
   contractId: string;

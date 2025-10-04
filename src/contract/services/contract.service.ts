@@ -6,7 +6,7 @@ import { CreateContractDTO, UpdateContractDTO } from '../dto/contract.dto';
 import { UserService } from 'src/user/user.service';
 import { instanceToPlain } from 'class-transformer';
 import { ContractProductService } from './contract-product.service';
-import { ContractPaymentService } from './contract-payment.service';
+import { InstallmentService } from '../../installment/installment.service';
 
 @Injectable()
 export class ContractService {
@@ -16,7 +16,7 @@ export class ContractService {
 
     private readonly userService: UserService,
     private readonly contractProductService: ContractProductService,
-    private readonly contractPaymentService: ContractPaymentService,
+    private readonly installmentService: InstallmentService,
   ) {}
 
   async create(dto: CreateContractDTO): Promise<Contract> {
@@ -206,7 +206,7 @@ export class ContractService {
     const contract = await this.findOne(id);
 
     await this.contractProductService.deleteByContractId(id);
-    await this.contractPaymentService.deleteByContractId(id);
+    await this.installmentService.deleteByContractId(id);
 
     await this.contractRepo.softRemove(contract);
   }
