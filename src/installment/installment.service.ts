@@ -66,6 +66,8 @@ export class InstallmentService {
       .innerJoinAndSelect('i.contract', 'contract')
       .leftJoinAndSelect('contract.vendorId', 'vendor')
       .leftJoinAndSelect('contract.customerId', 'customer')
+      .leftJoinAndSelect('i.installmentPayments', 'installmentPayments')
+      .leftJoinAndSelect('installmentPayments.payment', 'payment')
       .where('contract.vendorId = :vendorId', { vendorId })
       .andWhere('i.paid_at IS NULL')
       .andWhere('i.due_date < CURRENT_DATE')
@@ -78,6 +80,8 @@ export class InstallmentService {
       .innerJoinAndSelect('i.contract', 'contract')
       .leftJoinAndSelect('contract.vendorId', 'vendor')
       .leftJoinAndSelect('contract.customerId', 'customer')
+      .leftJoinAndSelect('i.installmentPayments', 'installmentPayments')
+      .leftJoinAndSelect('installmentPayments.payment', 'payment')
       .where('contract.vendorId = :vendorId', { vendorId })
       .andWhere('i.paid_at IS NULL')
       .andWhere('i.due_date = sub.min_due')
@@ -106,7 +110,11 @@ export class InstallmentService {
   async findOne(id: string): Promise<Installment> {
     const payment = await this.repo.findOne({
       where: { id },
-      relations: ['contract'],
+      relations: [
+        'contract',
+        'installmentPayments',
+        'installmentPayments.payment',
+      ],
     });
     if (!payment) {
       throw new NotFoundException(`Payment with ID ${id} not found`);
@@ -117,7 +125,11 @@ export class InstallmentService {
   async findByContract(contractId: string): Promise<Installment[]> {
     return this.repo.find({
       where: { contract: { id: contractId } },
-      relations: ['contract'],
+      relations: [
+        'contract',
+        'installmentPayments',
+        'installmentPayments.payment',
+      ],
       order: { dueDate: 'ASC' },
     });
   }
