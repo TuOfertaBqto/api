@@ -311,6 +311,17 @@ export class InstallmentService {
         'sub',
         'sub."contractId" = c.id',
       )
+      .leftJoin(
+        (qb) =>
+          qb
+            .select('ip.installment_id', 'installment_id')
+            .addSelect('SUM(ip.amount)', 'totalPaid')
+            .from('installment_payment', 'ip')
+            .where('ip.deleted_at IS NULL')
+            .groupBy('ip.installment_id'),
+        'p',
+        'p.installment_id = i.id',
+      )
       .setParameters(overdueNumbersSubQuery.getParameters())
       .select('v.id', 'vendorId')
       .addSelect('v.code', 'code')
@@ -323,7 +334,7 @@ export class InstallmentService {
       .addSelect('c.code', 'contractCode')
       .addSelect('COUNT(i.id)', 'overdueInstallments')
       .addSelect(
-        'SUM(i.installmentAmount - COALESCE(i.amountPaid, 0))',
+        'SUM(i.installmentAmount - COALESCE(p."totalPaid", 0))',
         'overdueAmount',
       )
       .addSelect('sub."overdueNumbers"', 'overdueNumbers')
