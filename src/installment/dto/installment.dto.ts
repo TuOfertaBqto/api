@@ -6,12 +6,10 @@ import {
   IsInt,
   IsNumber,
   IsOptional,
-  IsString,
   IsUUID,
   Min,
   ValidateNested,
 } from 'class-validator';
-import { PaymentMethod } from '../entities/installment.entity';
 import { PartialType } from '@nestjs/mapped-types';
 import { Agreement, Contract } from 'src/contract/entities/contract.entity';
 import { Type } from 'class-transformer';
@@ -21,31 +19,11 @@ export class CreateInstallmentDTO {
   @Type(() => Contract)
   contract: { id: string };
 
-  @IsEnum(PaymentMethod)
-  @IsOptional()
-  paymentMethod?: PaymentMethod;
-
-  @IsOptional()
-  @IsInt()
-  referenceNumber?: number;
-
-  @IsOptional()
-  @IsString()
-  photo?: string;
-
-  @IsOptional()
-  @IsString()
-  owner?: string;
-
   @IsDateString()
   dueDate: string;
 
   @IsInt()
   installmentAmount: number;
-
-  @IsOptional()
-  @IsNumber()
-  amountPaid?: number;
 
   @IsOptional()
   @IsDateString()

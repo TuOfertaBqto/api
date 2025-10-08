@@ -216,7 +216,7 @@ export class InstallmentService {
       .addSelect('c.code', 'contractCode')
       .addSelect('COUNT(i.id)', 'overdueInstallments')
       .addSelect(
-        'SUM(i.installmentAmount - COALESCE(i.amountPaid, 0))',
+        'SUM(i.installment_amount - COALESCE((SELECT SUM(ip.amount) FROM installment_payment ip WHERE ip.installment_id = i.id), 0))',
         'overdueAmount',
       )
       .addSelect('sub."overdueNumbers"', 'overdueNumbers')
