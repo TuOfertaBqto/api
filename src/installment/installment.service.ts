@@ -14,6 +14,7 @@ import {
 } from './dto/installment.dto';
 import { plainToInstance } from 'class-transformer';
 import { Installment } from './entities/installment.entity';
+import { InstallmentPayment } from './entities/installment-payment.entity';
 type RawRow = {
   vendorId: string;
   code: string;
@@ -422,50 +423,36 @@ export class InstallmentService {
     return Number(result?.totalDebt ?? 0);
   }
   async getOneVendorPaymentsSummary(vendorId: string) {
+    const subQuery = this.repo.manager
+      .createQueryBuilder(InstallmentPayment, 'ip')
+      .select('ip.installment_id', 'installmentid')
+      .addSelect('SUM(ip.amount)', 'totalpaid')
+      .where('ip.deletedAt IS NULL')
+      .groupBy('ip.installment_id');
+
     return this.repo
-      .createQueryBuilder('payment')
-      .innerJoin('payment.contract', 'contract')
+      .createQueryBuilder('i')
+      .innerJoin('i.contract', 'contract')
       .innerJoin('contract.vendorId', 'vendor')
+      .leftJoin('(' + subQuery.getQuery() + ')', 'p', 'p.installmentid = i.id')
+      .setParameters(subQuery.getParameters())
       .where('vendor.id = :vendorId', { vendorId })
-      .andWhere('payment.deletedAt IS NULL')
+      .andWhere('i.deletedAt IS NULL')
       .select('vendor.id', 'vendorId')
       .addSelect('vendor.code', 'vendorCode')
       .addSelect('vendor.firstName', 'firstName')
       .addSelect('vendor.lastName', 'lastName')
-      .addSelect('SUM(COALESCE(payment.amountPaid, 0))', 'totalAmountPaid')
+      .addSelect('COALESCE(SUM(p.totalPaid), 0)', 'totalAmountPaid')
       .addSelect(
-        `
-    SUM(
-      CASE 
-        WHEN payment.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas' 
-             AND payment.paidAt IS NULL
-        THEN (payment.installmentAmount - COALESCE(payment.amountPaid, 0)) 
-        ELSE 0 
-      END
-    )`,
+        "SUM(CASE WHEN i.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas' AND COALESCE(p.totalPaid, 0) < i.installmentAmount THEN (i.installmentAmount - COALESCE(p.totalPaid, 0)) ELSE 0 END)",
         'totalOverdueDebt',
       )
       .addSelect(
-        `
-    SUM(
-      CASE 
-        WHEN payment.dueDate >= CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas' 
-             AND payment.paidAt IS NULL
-        THEN (payment.installmentAmount - COALESCE(payment.amountPaid, 0)) 
-        ELSE 0 
-      END
-    )`,
+        "SUM(CASE WHEN i.dueDate >= CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas' AND COALESCE(p.totalPaid, 0) < i.installmentAmount THEN (i.installmentAmount - COALESCE(p.totalPaid, 0)) ELSE 0 END)",
         'totalPendingBalance',
       )
       .addSelect(
-        `
-    SUM(
-      CASE 
-        WHEN payment.paidAt IS NULL
-        THEN (payment.installmentAmount - COALESCE(payment.amountPaid, 0)) 
-        ELSE 0 
-      END
-    )`,
+        'SUM(i.installmentAmount - COALESCE(p.totalPaid, 0))',
         'totalDebt',
       )
       .groupBy('vendor.id')
