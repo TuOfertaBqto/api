@@ -74,8 +74,6 @@ export class InstallmentController {
       payload.sub,
     );
 
-    console.log({ totalInstallments, overdueInstallments });
-
     return totalInstallments * 0.3 > overdueInstallments;
   }
 

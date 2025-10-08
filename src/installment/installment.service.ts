@@ -399,7 +399,12 @@ export class InstallmentService {
       .where('v.id = :vendorId', { vendorId })
       .andWhere(`i.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
       .select(
-        'SUM(i.installmentAmount - COALESCE(i.amountPaid, 0))',
+        `SUM(
+          i.installment_amount - COALESCE(
+            (SELECT SUM(ip.amount) FROM installment_payment ip WHERE ip.installment_id = i.id),
+            0
+          )
+        )`,
         'totalDebt',
       )
       .getRawOne<{ totalDebt: string }>();
