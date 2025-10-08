@@ -505,14 +505,17 @@ export class InstallmentService {
   }
   async getGlobalPaymentsSummary(): Promise<VendorPaymentsTotals> {
     const result = await this.repo
-      .createQueryBuilder('payment')
-      .select('SUM(COALESCE(payment.amount_paid, 0))', 'totalAmountPaid')
+      .createQueryBuilder('i')
+      .select(
+        `SUM(COALESCE((SELECT SUM(ip.amount) FROM installment_payment ip WHERE ip.installment_id = i.id), 0))`,
+        'totalAmountPaid',
+      )
       .addSelect(
         `SUM(
         CASE 
-          WHEN payment.due_date < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'
-           AND payment.paid_at IS NULL 
-          THEN (payment.installment_amount - COALESCE(payment.amount_paid, 0)) 
+          WHEN i.due_date < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'
+           AND i.paid_at IS NULL 
+          THEN (i.installment_amount - COALESCE((SELECT SUM(ip.amount) FROM installment_payment ip WHERE ip.installment_id = i.id), 0)) 
           ELSE 0 
         END
       )`,
@@ -521,9 +524,9 @@ export class InstallmentService {
       .addSelect(
         `SUM(
         CASE 
-          WHEN payment.due_date >= CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'
-           AND payment.paid_at IS NULL 
-          THEN (payment.installment_amount - COALESCE(payment.amount_paid, 0)) 
+          WHEN i.due_date >= CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'
+           AND i.paid_at IS NULL 
+          THEN (i.installment_amount - COALESCE((SELECT SUM(ip.amount) FROM installment_payment ip WHERE ip.installment_id = i.id), 0)) 
           ELSE 0 
         END
       )`,
@@ -532,8 +535,8 @@ export class InstallmentService {
       .addSelect(
         `SUM(
         CASE 
-          WHEN payment.paid_at IS NULL 
-          THEN (payment.installment_amount - COALESCE(payment.amount_paid, 0)) 
+          WHEN i.paid_at IS NULL 
+          THEN (i.installment_amount - COALESCE((SELECT SUM(ip.amount) FROM installment_payment ip WHERE ip.installment_id = i.id), 0)) 
           ELSE 0 
         END
       )`,
