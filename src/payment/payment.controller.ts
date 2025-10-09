@@ -65,7 +65,6 @@ export class PaymentController {
         payment: { id: payment.id },
         amount: amountToPay,
       });
-      availableAmount -= amountToPay;
 
       if (newDebt > 0) {
         if (availableAmount >= installmentDebt) {
@@ -80,6 +79,7 @@ export class PaymentController {
           endDate: new Date(),
         });
       }
+      availableAmount -= amountToPay;
     }
 
     return payment;
