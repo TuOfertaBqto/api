@@ -36,35 +36,26 @@ export class PaymentController {
     }
 
     const payment = await this.paymentService.create(data);
+    let availableAmount = data.amount;
+    let installmentId = id;
 
-    const installmentData = await this.installmentService.findOne(id);
-
-    let installmentId = installmentData.id;
-    const partialPayment = installmentData.installmentPayments
-      ? installmentData.installmentPayments.reduce(
-          (sum, ip) => sum + Number(ip.amount),
-          0,
-        )
-      : 0;
-    let remainingAmount = partialPayment + data.amount;
-
-    while (remainingAmount > 0) {
+    while (availableAmount > 0) {
       const installment = await this.installmentService.findOne(installmentId);
       const installmentAmount = installment.installmentAmount;
-      const amountToPay = Math.min(installmentAmount, remainingAmount);
-      const partialPaymentAmount = installment.installmentPayments
-        ? installment.installmentPayments.reduce(
-            (sum, ip) => sum + Number(ip.amount),
-            0,
-          )
-        : 0;
+      const partialPaymentAmount =
+        installment.installmentPayments?.reduce(
+          (sum, ip) => sum + Number(ip.amount),
+          0,
+        ) ?? 0;
+      const installmentDebt = installmentAmount - partialPaymentAmount;
+      const amountToPay = Math.min(installmentDebt, availableAmount);
 
-      const newDebt = installment.debt - amountToPay + partialPaymentAmount;
+      const newDebt = installment.debt - amountToPay;
 
       await this.installmentService.update(installment, {
         debt: newDebt,
         paidAt:
-          newDebt === 0 || amountToPay === installmentAmount
+          newDebt === 0 || availableAmount >= installmentDebt
             ? data.paidAt
             : undefined,
       });
@@ -74,10 +65,10 @@ export class PaymentController {
         payment: { id: payment.id },
         amount: amountToPay,
       });
-      remainingAmount -= amountToPay;
+      availableAmount -= amountToPay;
 
       if (newDebt > 0) {
-        if (amountToPay === installmentAmount) {
+        if (availableAmount >= installmentDebt) {
           const next = await this.installmentService.passDebtToNextInstallment(
             installment,
             newDebt,
