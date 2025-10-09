@@ -1,13 +1,16 @@
-import { IsNotEmpty, IsNumber, IsPositive, IsUUID } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsNumber, IsPositive, ValidateNested } from 'class-validator';
+import { Installment } from '../entities/installment.entity';
+import { Payment } from 'src/payment/entities/payment.entity';
 
 export class CreateInstallmentPaymentDTO {
-  @IsUUID()
-  @IsNotEmpty()
-  installment: string;
+  @ValidateNested()
+  @Type(() => Installment)
+  installment: { id: string };
 
-  @IsUUID()
-  @IsNotEmpty()
-  payment: string;
+  @ValidateNested()
+  @Type(() => Payment)
+  payment: { id: string };
 
   @IsNumber()
   @IsPositive()

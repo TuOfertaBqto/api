@@ -12,11 +12,7 @@ export class InstallmentPaymentService {
   ) {}
 
   async create(data: CreateInstallmentPaymentDTO): Promise<InstallmentPayment> {
-    const installmentPayment = this.repo.create({
-      installment: { id: data.installment },
-      payment: { id: data.payment },
-      amount: data.amount,
-    });
+    const installmentPayment = this.repo.create(data);
     return this.repo.save(installmentPayment);
   }
 }

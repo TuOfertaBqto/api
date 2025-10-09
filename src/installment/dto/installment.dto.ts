@@ -27,7 +27,7 @@ export class CreateInstallmentDTO {
 
   @IsOptional()
   @IsDateString()
-  paidAt?: string;
+  paidAt?: Date;
 
   @IsOptional()
   @IsNumber()
