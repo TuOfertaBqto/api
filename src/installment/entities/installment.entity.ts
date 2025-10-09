@@ -1,6 +1,7 @@
 import { BaseModel } from 'src/utils/entity';
-import { Column, Entity, JoinColumn, ManyToOne } from 'typeorm';
-import { Contract } from './contract.entity';
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
+import { Contract } from 'src/contract/entities/contract.entity';
+import { InstallmentPayment } from './installment-payment.entity';
 
 export enum PaymentMethod {
   ZELLE = 'zelle',
@@ -12,8 +13,8 @@ export enum PaymentMethod {
   DISCOUNT = 'discount',
 }
 
-@Entity('contract_payment')
-export class ContractPayment extends BaseModel {
+@Entity('installment')
+export class Installment extends BaseModel {
   @ManyToOne(() => Contract)
   @JoinColumn({ name: 'contract_id' })
   contract: Contract;
@@ -21,6 +22,7 @@ export class ContractPayment extends BaseModel {
   @Column({
     type: 'enum',
     enum: PaymentMethod,
+    enumName: 'contract_payment_payment_method_enum',
     name: 'payment_method',
     nullable: true,
   })
@@ -61,4 +63,7 @@ export class ContractPayment extends BaseModel {
     nullable: true,
   })
   debt: number;
+
+  @OneToMany(() => InstallmentPayment, (ip) => ip.installment)
+  installmentPayments: InstallmentPayment[];
 }

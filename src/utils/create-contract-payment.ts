@@ -1,4 +1,4 @@
-import { CreateContractPaymentDTO } from 'src/contract/dto/contract-payment.dto';
+import { CreateInstallmentDTO } from 'src/installment/dto/installment.dto';
 import { Agreement } from 'src/contract/entities/contract.entity';
 
 interface ProductPayment {
@@ -26,8 +26,8 @@ export function generateInstallments(
   products: ProductPayment[],
   agreement: Agreement,
   startDate: Date,
-): CreateContractPaymentDTO[] {
-  const payments: CreateContractPaymentDTO[] = [];
+): CreateInstallmentDTO[] {
+  const payments: CreateInstallmentDTO[] = [];
 
   const intervalDays = agreement === Agreement.WEEKLY ? 7 : 14;
 
