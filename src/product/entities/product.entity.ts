@@ -10,10 +10,21 @@ export class Product extends BaseModel {
   @Column({ type: 'text', name: 'description', nullable: true })
   description: string;
 
-  @Column({ type: 'int', name: 'price' })
+  @Column({
+    type: 'decimal',
+    name: 'price',
+    precision: 10,
+    scale: 2,
+  })
   price: number;
 
-  @Column({ type: 'int', name: 'installment_amount', default: 0 })
+  @Column({
+    type: 'decimal',
+    name: 'installment_amount',
+    precision: 10,
+    scale: 2,
+    default: 0.0,
+  })
   installmentAmount: number;
 
   @Column({ type: 'boolean', name: 'is_visible', default: true })
