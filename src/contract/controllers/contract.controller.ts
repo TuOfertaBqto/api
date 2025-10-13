@@ -121,7 +121,7 @@ export class ContractController {
   }
 
   @Get('vendor/:vendorId')
-  findAll(@Param('vendorId') vendorId: string) {
+  findAllByVendor(@Param('vendorId') vendorId: string) {
     return this.contractService.findAll(vendorId);
   }
 
