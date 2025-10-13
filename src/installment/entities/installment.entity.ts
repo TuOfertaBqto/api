@@ -40,7 +40,13 @@ export class Installment extends BaseModel {
   @Column({ type: 'timestamp', name: 'due_date' })
   dueDate: Date;
 
-  @Column({ type: 'int', name: 'installment_amount', default: 0 })
+  @Column({
+    type: 'decimal',
+    name: 'installment_amount',
+    precision: 10,
+    scale: 2,
+    default: 0.0,
+  })
   installmentAmount: number;
 
   @Column({
