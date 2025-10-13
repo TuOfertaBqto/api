@@ -36,6 +36,12 @@ export class ContractProduct extends BaseModel {
   @Column({ type: 'int', name: 'price', default: 0 })
   price: number;
 
-  @Column({ type: 'int', name: 'installment_amount', default: 0 })
+  @Column({
+    type: 'decimal',
+    name: 'installment_amount',
+    precision: 10,
+    scale: 2,
+    default: 0,
+  })
   installmentAmount: number;
 }
