@@ -10,6 +10,7 @@ export enum PaymentType {
   BANK_TRANSFER = 'bank_transfer',
   CASH = 'cash',
   DISCOUNT = 'discount',
+  PAYMENT_AGREEMENT = 'payment_agreement',
 }
 
 @Entity('payment')
