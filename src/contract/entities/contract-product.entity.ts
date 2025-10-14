@@ -33,7 +33,13 @@ export class ContractProduct extends BaseModel {
   })
   status: ContractProductStatus;
 
-  @Column({ type: 'int', name: 'price', default: 0 })
+  @Column({
+    type: 'decimal',
+    name: 'price',
+    precision: 10,
+    scale: 2,
+    default: 0,
+  })
   price: number;
 
   @Column({

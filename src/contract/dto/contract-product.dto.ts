@@ -3,6 +3,7 @@ import {
   IsEnum,
   IsInt,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsUUID,
   Min,
@@ -31,12 +32,12 @@ export class CreateContractProductDTO {
   @IsOptional()
   status?: ContractProductStatus;
 
-  @IsInt()
-  @Min(1)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
   price: number;
 
-  @IsInt()
-  @Min(1)
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0.01)
   installmentAmount: number;
 }
 
