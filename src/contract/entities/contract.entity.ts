@@ -43,7 +43,17 @@ export class Contract extends BaseModel {
   @Column({ type: 'enum', enum: Agreement, name: 'agreement' })
   agreement: Agreement;
 
-  @Column({ type: 'int', name: 'total_price', default: 0 })
+  @Column({
+    type: 'decimal',
+    name: 'total_price',
+    precision: 10,
+    scale: 2,
+    default: 0,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string | null) => (value ? parseFloat(value) : 0),
+    },
+  })
   totalPrice: number;
 
   @Column({
