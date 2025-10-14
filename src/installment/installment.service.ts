@@ -444,15 +444,15 @@ export class InstallmentService {
       .addSelect('vendor.lastName', 'lastName')
       .addSelect('COALESCE(SUM(p.totalPaid), 0)', 'totalAmountPaid')
       .addSelect(
-        "SUM(CASE WHEN i.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas' AND COALESCE(p.totalPaid, 0) < i.installmentAmount THEN (i.installmentAmount - COALESCE(p.totalPaid, 0)) ELSE 0 END)",
+        "SUM(CASE WHEN i.paidAt IS NULL AND i.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas' AND COALESCE(p.totalPaid, 0) < i.installmentAmount THEN (i.installmentAmount - COALESCE(p.totalPaid, 0)) ELSE 0 END)",
         'totalOverdueDebt',
       )
       .addSelect(
-        "SUM(CASE WHEN i.dueDate >= CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas' AND COALESCE(p.totalPaid, 0) < i.installmentAmount THEN (i.installmentAmount - COALESCE(p.totalPaid, 0)) ELSE 0 END)",
+        "SUM(CASE WHEN i.paidAt IS NULL AND i.dueDate >= CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas' AND COALESCE(p.totalPaid, 0) < i.installmentAmount THEN (i.installmentAmount - COALESCE(p.totalPaid, 0)) ELSE 0 END)",
         'totalPendingBalance',
       )
       .addSelect(
-        'SUM(i.installmentAmount - COALESCE(p.totalPaid, 0))',
+        'SUM(CASE WHEN i.paidAt IS NULL THEN (i.installmentAmount - COALESCE(p.totalPaid, 0)) ELSE 0 END)',
         'totalDebt',
       )
       .groupBy('vendor.id')
