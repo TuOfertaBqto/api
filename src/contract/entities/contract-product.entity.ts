@@ -39,6 +39,10 @@ export class ContractProduct extends BaseModel {
     precision: 10,
     scale: 2,
     default: 0,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string | null) => (value ? parseFloat(value) : 0),
+    },
   })
   price: number;
 
@@ -48,6 +52,10 @@ export class ContractProduct extends BaseModel {
     precision: 10,
     scale: 2,
     default: 0,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string | null) => (value ? parseFloat(value) : 0),
+    },
   })
   installmentAmount: number;
 }
