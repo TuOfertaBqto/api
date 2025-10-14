@@ -15,6 +15,10 @@ export class Product extends BaseModel {
     name: 'price',
     precision: 10,
     scale: 2,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string | null) => (value ? parseFloat(value) : 0),
+    },
   })
   price: number;
 
@@ -24,6 +28,10 @@ export class Product extends BaseModel {
     precision: 10,
     scale: 2,
     default: 0.0,
+    transformer: {
+      to: (value: number) => value,
+      from: (value: string | null) => (value ? parseFloat(value) : 0),
+    },
   })
   installmentAmount: number;
 
