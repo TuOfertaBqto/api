@@ -90,6 +90,29 @@ export class PaymentController {
     return this.paymentService.findAll();
   }
 
+  @Get('summary')
+  async getPaymentsSummary(
+    @Query('startDate') start: string,
+    @Query('endDate') end: string,
+  ) {
+    if (!start || !end) {
+      throw new BadRequestException('Debe indicar startDate y endDate');
+    }
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+
+    if (startDate > endDate) {
+      throw new BadRequestException(
+        'La fecha de inicio no puede ser posterior a la fecha final',
+      );
+    }
+
+    return await this.paymentService.getPaymentsSummaryByType(
+      startDate,
+      endDate,
+    );
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.paymentService.findOne(id);

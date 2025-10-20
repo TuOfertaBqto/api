@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Payment } from './entities/payment.entity';
+import { Payment, PaymentType } from './entities/payment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { CreatePaymentDTO, UpdatePaymentDTO } from './dto/payment.dto';
@@ -39,5 +39,44 @@ export class PaymentService {
   async remove(id: string): Promise<void> {
     const payment = await this.findOne(id);
     await this.paymentRepository.softRemove(payment);
+  }
+
+  async getPaymentsSummaryByType(startDate: Date, endDate: Date) {
+    const startStr = startDate.toISOString().slice(0, 10);
+    const endStr = endDate.toISOString().slice(0, 10);
+
+    const query = this.paymentRepository
+      .createQueryBuilder('payment')
+      .select('payment.type', 'type')
+      .addSelect('SUM(payment.amount)', 'total')
+      .addSelect('COUNT(payment.id)', 'count')
+      .where('payment.deletedAt IS NULL')
+      .andWhere('payment.paidAt BETWEEN :start AND :end', {
+        start: startStr,
+        end: endStr,
+      })
+      .groupBy('payment.type')
+      .orderBy('payment.type', 'ASC');
+
+    const result = await query.getRawMany<{
+      type: PaymentType;
+      total: string;
+      count: string;
+    }>();
+
+    const resultMap = new Map(
+      result.map((r) => [
+        r.type,
+        { total: Number(r.total), count: Number(r.count) },
+      ]),
+    );
+
+    const allTypes = Object.values(PaymentType);
+
+    return allTypes.map((type) => ({
+      type,
+      total: resultMap.get(type)?.total ?? 0,
+      count: resultMap.get(type)?.count ?? 0,
+    }));
   }
 }
