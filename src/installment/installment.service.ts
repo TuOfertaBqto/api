@@ -28,6 +28,9 @@ type RawRow = {
   overdueInstallments: string;
   overdueAmount: string;
   overdueNumbers: string;
+  productId: string;
+  productName: string;
+  quantity: string;
 };
 type VendorPaymentsTotals = {
   totalAmountPaid: number;
@@ -200,6 +203,8 @@ export class InstallmentService {
       .innerJoin('i.contract', 'c')
       .innerJoin('c.vendorId', 'v')
       .innerJoin('c.customerId', 'cust')
+      .leftJoin('contract_product', 'cp', 'cp.contract_id = c.id')
+      .leftJoin('product', 'p', 'p.id = cp.product_id')
       .leftJoin(
         '(' + overdueNumbersSubQuery.getQuery() + ')',
         'sub',
@@ -221,11 +226,14 @@ export class InstallmentService {
         'overdueAmount',
       )
       .addSelect('sub."overdueNumbers"', 'overdueNumbers')
+      .addSelect('p.id', 'productId')
+      .addSelect('p.name', 'productName')
+      .addSelect('cp.quantity', 'quantity')
       .where(`i.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
       .andWhere('i.paidAt IS NULL')
       .andWhere('i.deletedAt IS NULL')
       .groupBy(
-        'v.id, v.code, v.firstName, v.lastName, cust.id, cust.firstName, cust.lastName, c.id, c.code, sub."overdueNumbers"',
+        'v.id, v.code, v.firstName, v.lastName, cust.id, cust.firstName, cust.lastName, c.id, c.code, sub."overdueNumbers", p.id, p.name, cp.quantity',
       )
       .orderBy('cust.firstName', 'ASC')
       .addOrderBy('c.code', 'ASC')
@@ -253,18 +261,39 @@ export class InstallmentService {
           };
           vendor.customers.push(customer);
         }
-        customer.contracts.push({
-          contractId: row.contractId,
-          contractCode: row.contractCode,
-          overdueInstallments: Number(row.overdueInstallments),
-          overdueAmount: Number(row.overdueAmount),
-          overdueNumbers: row.overdueNumbers
-            ? row.overdueNumbers
-                .split(',')
-                .map(Number)
-                .sort((a, b) => a - b)
-            : [],
-        });
+        let contract = customer.contracts.find(
+          (c) => c.contractId === row.contractId,
+        );
+        if (!contract) {
+          contract = {
+            contractId: row.contractId,
+            contractCode: row.contractCode,
+            overdueInstallments: Number(row.overdueInstallments),
+            overdueAmount: Number(row.overdueAmount),
+            overdueNumbers: row.overdueNumbers
+              ? row.overdueNumbers
+                  .split(',')
+                  .map(Number)
+                  .sort((a, b) => a - b)
+              : [],
+            products: [],
+          };
+          customer.contracts.push(contract);
+        }
+
+        if (row.productId && row.productName) {
+          const exists = contract.products.some(
+            (p) => p.productId === row.productId,
+          );
+          if (!exists) {
+            contract.products.push({
+              productId: row.productId,
+              productName: row.productName,
+              quantity: Number(row.quantity),
+            });
+          }
+        }
+
         return acc;
       },
       {},
@@ -383,6 +412,7 @@ export class InstallmentService {
                 .map(Number)
                 .sort((a, b) => a - b)
             : [],
+          products: [],
         });
         return acc;
       },
