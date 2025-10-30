@@ -57,8 +57,6 @@ export class InstallmentController {
       payload.sub,
     );
 
-    console.log(totalInstallments);
-
     if (totalInstallments === 0) {
       return true;
     }
@@ -66,8 +64,6 @@ export class InstallmentController {
     const overdueInstallments = await this.service.getTotalOverdueByVendor(
       payload.sub,
     );
-
-    console.log(overdueInstallments);
 
     return totalInstallments * 0.3 > overdueInstallments;
   }
