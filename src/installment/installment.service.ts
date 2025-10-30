@@ -427,10 +427,25 @@ export class InstallmentService {
       .innerJoin('i.contract', 'c')
       .innerJoin('c.vendorId', 'v')
       .where('v.id = :vendorId', { vendorId })
-      .select('SUM(i.installmentAmount)', 'total')
-      .getRawOne<{ total: string }>();
+      .andWhere('i.deleted_at IS NULL')
+      .andWhere('c.deleted_at IS NULL')
+      .select(
+        `SUM(
+        i.installment_amount - COALESCE(
+          (
+            SELECT SUM(ip.amount)
+            FROM installment_payment ip
+            WHERE ip.installment_id = i.id
+              AND ip.deleted_at IS NULL
+          ),
+          0
+        )
+      )`,
+        'totalPending',
+      )
+      .getRawOne<{ totalPending: string }>();
 
-    return Number(result?.total ?? 0);
+    return Number(result?.totalPending ?? 0);
   }
 
   async getTotalOverdueByVendor(vendorId: string): Promise<number> {
@@ -439,14 +454,21 @@ export class InstallmentService {
       .innerJoin('i.contract', 'c')
       .innerJoin('c.vendorId', 'v')
       .where('v.id = :vendorId', { vendorId })
+      .andWhere('i.deleted_at IS NULL')
+      .andWhere('c.deleted_at IS NULL')
       .andWhere(`i.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
       .select(
         `SUM(
-          i.installment_amount - COALESCE(
-            (SELECT SUM(ip.amount) FROM installment_payment ip WHERE ip.installment_id = i.id),
-            0
-          )
-        )`,
+        i.installment_amount - COALESCE(
+          (
+            SELECT SUM(ip.amount)
+            FROM installment_payment ip
+            WHERE ip.installment_id = i.id
+              AND ip.deleted_at IS NULL
+          ),
+          0
+        )
+      )`,
         'totalDebt',
       )
       .getRawOne<{ totalDebt: string }>();
