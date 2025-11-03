@@ -55,8 +55,7 @@ export class PaymentService {
         start: startStr,
         end: endStr,
       })
-      .groupBy('payment.type')
-      .orderBy('payment.type', 'ASC');
+      .groupBy('payment.type');
 
     const result = await query.getRawMany<{
       type: PaymentType;
@@ -73,10 +72,14 @@ export class PaymentService {
 
     const allTypes = Object.values(PaymentType);
 
-    return allTypes.map((type) => ({
+    const summary = allTypes.map((type) => ({
       type,
       total: resultMap.get(type)?.total ?? 0,
       count: resultMap.get(type)?.count ?? 0,
     }));
+
+    summary.sort((a, b) => b.total - a.total);
+
+    return summary;
   }
 }
