@@ -7,6 +7,7 @@ import { Installment } from 'src/installment/entities/installment.entity';
 export enum Agreement {
   WEEKLY = 'weekly',
   FORTNIGHTLY = 'fortnightly',
+  FIFTEEN_AND_LAST = 'fifteen_and_last',
 }
 
 export enum ContractStatus {
