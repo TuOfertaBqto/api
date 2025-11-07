@@ -7,7 +7,11 @@ interface ProductPayment {
   quantity: number;
 }
 
-export function getNextSaturday(fromDate: string | Date): Date {
+export function getNextSaturday(
+  fromDate: string | Date,
+  type: Agreement = Agreement.WEEKLY,
+  isFirst = false,
+): Date {
   const date =
     typeof fromDate === 'string'
       ? new Date(fromDate + 'T00:00:00')
@@ -16,25 +20,56 @@ export function getNextSaturday(fromDate: string | Date): Date {
   const day = date.getDay();
   const diff = day === 6 ? 7 : 6 - day;
 
-  date.setDate(date.getDate() + diff);
+  const offset = type === Agreement.FORTNIGHTLY && !isFirst ? diff + 7 : diff;
+
+  date.setDate(date.getDate() + offset);
   date.setHours(0, 0, 0, 0);
+
   return date;
+}
+
+export function getNextFortnight(fromDate: string | Date): Date {
+  const date =
+    typeof fromDate === 'string'
+      ? new Date(fromDate + 'T00:00:00')
+      : new Date(fromDate);
+
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+
+  const fifteenth = new Date(year, month, 15, 0, 0, 0, 0);
+
+  const lastOfMonth = new Date(year, month + 1, 0, 0, 0, 0, 0);
+
+  let nextDate: Date;
+
+  if (day < 15) {
+    nextDate = fifteenth;
+  } else if (day >= 15 && day < lastOfMonth.getDate()) {
+    nextDate = lastOfMonth;
+  } else {
+    nextDate = new Date(year, month + 1, 15, 0, 0, 0, 0);
+  }
+
+  return nextDate;
 }
 
 export function generateInstallments(
   contractId: string,
   products: ProductPayment[],
   agreement: Agreement,
-  startDate: Date,
+  startDate: string | Date,
 ): CreateInstallmentDTO[] {
   const payments: CreateInstallmentDTO[] = [];
-
-  const intervalDays = agreement === Agreement.WEEKLY ? 7 : 14;
 
   const remainingProducts = products.map((p) => {
     let adjustedInstallment = p.installmentAmount * p.quantity;
 
-    if (agreement === Agreement.FORTNIGHTLY) {
+    if (
+      agreement === Agreement.FORTNIGHTLY ||
+      agreement === Agreement.FIFTEEN_AND_LAST
+    ) {
       adjustedInstallment *= 2;
     }
 
@@ -46,7 +81,8 @@ export function generateInstallments(
     };
   });
 
-  let installmentIndex = 0;
+  let dueDateTemp = startDate;
+  let isFirst = true;
 
   while (remainingProducts.some((p) => p.remainingBalance > 0)) {
     let periodPayment = 0;
@@ -63,20 +99,22 @@ export function generateInstallments(
       }
     });
 
-    const dueDate = new Date(startDate);
-    dueDate.setDate(startDate.getDate() + installmentIndex * intervalDays);
+    const dueDate =
+      agreement === Agreement.FIFTEEN_AND_LAST
+        ? getNextFortnight(dueDateTemp)
+        : getNextSaturday(dueDateTemp, agreement, isFirst);
 
     payments.push({
       contract: { id: contractId },
       dueDate: dueDate.toISOString(),
       installmentAmount: periodPayment,
-      debt:
-        installmentIndex === 0
-          ? products.reduce((sum, prod) => sum + prod.price * prod.quantity, 0)
-          : undefined,
+      debt: isFirst
+        ? products.reduce((sum, prod) => sum + prod.price * prod.quantity, 0)
+        : undefined,
     });
 
-    installmentIndex++;
+    dueDateTemp = dueDate;
+    isFirst = false;
   }
 
   return payments;

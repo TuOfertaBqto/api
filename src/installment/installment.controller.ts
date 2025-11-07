@@ -9,10 +9,7 @@ import {
 } from '@nestjs/common';
 import { InstallmentService } from './installment.service';
 import { CreateListInstallmentDTO } from './dto/installment.dto';
-import {
-  generateInstallments,
-  getNextSaturday,
-} from 'src/utils/create-contract-payment';
+import { generateInstallments } from 'src/utils/create-contract-payment';
 import { ValidatedJwt } from 'src/auth/decorators/validated-jwt.decorator';
 import { JwtPayloadDTO } from 'src/auth/dto/jwt.dto';
 import { UserRole } from 'src/user/entities/user.entity';
@@ -23,12 +20,11 @@ export class InstallmentController {
 
   @Post()
   create(@Body() dto: CreateListInstallmentDTO) {
-    const firstDueDate = getNextSaturday(dto.startContract);
     const payments = generateInstallments(
       dto.contractId,
       dto.products,
       dto.agreementContract,
-      firstDueDate,
+      dto.startContract,
     );
 
     return this.service.createMany(payments);
