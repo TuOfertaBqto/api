@@ -427,6 +427,7 @@ export class InstallmentService {
       .innerJoin('i.contract', 'c')
       .innerJoin('c.vendorId', 'v')
       .where('v.id = :vendorId', { vendorId })
+      .andWhere('i.paid_at IS NULL')
       .andWhere('i.deleted_at IS NULL')
       .andWhere('c.deleted_at IS NULL')
       .select(
@@ -454,6 +455,7 @@ export class InstallmentService {
       .innerJoin('i.contract', 'c')
       .innerJoin('c.vendorId', 'v')
       .where('v.id = :vendorId', { vendorId })
+      .andWhere('i.paid_at IS NULL')
       .andWhere('i.deleted_at IS NULL')
       .andWhere('c.deleted_at IS NULL')
       .andWhere(`i.dueDate < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'`)
