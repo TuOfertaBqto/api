@@ -575,16 +575,25 @@ export class InstallmentService {
   async getGlobalPaymentsSummary(): Promise<VendorPaymentsTotals> {
     const result = await this.repo
       .createQueryBuilder('i')
-      .select(
-        `SUM(COALESCE((SELECT SUM(ip.amount) FROM installment_payment ip WHERE ip.installment_id = i.id), 0))`,
-        'totalAmountPaid',
+      .where('i.deleted_at IS NULL')
+      .leftJoin(
+        (qb) =>
+          qb
+            .from('installment_payment', 'ip')
+            .select('ip.installment_id', 'installment_id')
+            .addSelect('SUM(ip.amount)', 'amount_paid')
+            .where('ip.deleted_at IS NULL')
+            .groupBy('ip.installment_id'),
+        'p',
+        'p.installment_id = i.id',
       )
+      .select('SUM(COALESCE(p.amount_paid, 0))', 'totalAmountPaid')
       .addSelect(
         `SUM(
         CASE 
           WHEN i.due_date < CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'
            AND i.paid_at IS NULL 
-          THEN (i.installment_amount - COALESCE((SELECT SUM(ip.amount) FROM installment_payment ip WHERE ip.installment_id = i.id), 0)) 
+          THEN (i.installment_amount - COALESCE(p.amount_paid, 0))
           ELSE 0 
         END
       )`,
@@ -595,7 +604,7 @@ export class InstallmentService {
         CASE 
           WHEN i.due_date >= CURRENT_TIMESTAMP AT TIME ZONE 'America/Caracas'
            AND i.paid_at IS NULL 
-          THEN (i.installment_amount - COALESCE((SELECT SUM(ip.amount) FROM installment_payment ip WHERE ip.installment_id = i.id), 0)) 
+          THEN (i.installment_amount - COALESCE(p.amount_paid, 0))
           ELSE 0 
         END
       )`,
@@ -605,13 +614,14 @@ export class InstallmentService {
         `SUM(
         CASE 
           WHEN i.paid_at IS NULL 
-          THEN (i.installment_amount - COALESCE((SELECT SUM(ip.amount) FROM installment_payment ip WHERE ip.installment_id = i.id), 0)) 
+          THEN (i.installment_amount - COALESCE(p.amount_paid, 0))
           ELSE 0 
         END
       )`,
         'totalDebt',
       )
       .getRawOne<VendorPaymentsTotals>();
+
     return result as VendorPaymentsTotals;
   }
   async deleteByContractId(contractId: string): Promise<void> {
