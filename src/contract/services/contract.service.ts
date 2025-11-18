@@ -193,8 +193,6 @@ export class ContractService {
     if (dto.requestDate !== undefined) contract.requestDate = dto.requestDate;
     if (dto.startDate !== undefined) contract.startDate = dto.startDate;
     if (dto.endDate !== undefined) contract.endDate = dto.endDate;
-    if (dto.installmentAmount !== undefined)
-      contract.installmentAmount = dto.installmentAmount;
     if (dto.totalPrice !== undefined) contract.totalPrice = dto.totalPrice;
     if (dto.agreement !== undefined) contract.agreement = dto.agreement;
     if (dto.status !== undefined) contract.status = dto.status;

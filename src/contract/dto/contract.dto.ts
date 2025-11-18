@@ -54,10 +54,6 @@ export class CreateContractDTO {
   @IsOptional()
   endDate?: Date;
 
-  @IsNumber()
-  @IsOptional()
-  installmentAmount?: number;
-
   @IsEnum(Agreement)
   agreement: Agreement;
 

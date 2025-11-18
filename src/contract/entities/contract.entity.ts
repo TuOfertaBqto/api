@@ -38,9 +38,6 @@ export class Contract extends BaseModel {
   @Column({ type: 'timestamp', name: 'end_date', nullable: true })
   endDate: Date;
 
-  @Column({ type: 'int', name: 'installment_amount', default: 0 })
-  installmentAmount: number;
-
   @Column({ type: 'enum', enum: Agreement, name: 'agreement' })
   agreement: Agreement;
 
