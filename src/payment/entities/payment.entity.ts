@@ -1,6 +1,7 @@
 import { InstallmentPayment } from 'src/installment/entities/installment-payment.entity';
 import { BaseModel } from 'src/utils/entity';
-import { Column, Entity, OneToMany } from 'typeorm';
+import { Column, Entity, OneToMany, OneToOne } from 'typeorm';
+import { PaymentAccount } from './payment-account.entity';
 
 export enum PaymentType {
   ZELLE = 'zelle',
@@ -46,4 +47,7 @@ export class Payment extends BaseModel {
 
   @OneToMany(() => InstallmentPayment, (ip) => ip.payment)
   installmentPayments: InstallmentPayment[];
+
+  @OneToOne(() => PaymentAccount, (pa) => pa.payment)
+  account: PaymentAccount;
 }

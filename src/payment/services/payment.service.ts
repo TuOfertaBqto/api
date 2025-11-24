@@ -1,8 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Payment, PaymentType } from './entities/payment.entity';
+import { Payment, PaymentType } from '../entities/payment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreatePaymentDTO, UpdatePaymentDTO } from './dto/payment.dto';
+import { CreatePaymentDTO, UpdatePaymentDTO } from '../dto/payment.dto';
 
 @Injectable()
 export class PaymentService {
