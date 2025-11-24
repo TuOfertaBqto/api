@@ -10,13 +10,13 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { PaymentService } from './services/payment.service';
-import { CreatePaymentDTO, UpdatePaymentDTO } from './dto/payment.dto';
+import { PaymentService } from '../services/payment.service';
+import { CreatePaymentDTO, UpdatePaymentDTO } from '../dto/payment.dto';
 import { InstallmentService } from 'src/installment/installment.service';
 import { ContractService } from 'src/contract/services/contract.service';
 import { InstallmentPaymentService } from 'src/installment/installment-payment.service';
-import { PaymentType } from './entities/payment.entity';
-import { PaymentAccountService } from './services/payment-account.service';
+import { PaymentType } from '../entities/payment.entity';
+import { PaymentAccountService } from '../services/payment-account.service';
 
 @Controller('payment')
 export class PaymentController {
