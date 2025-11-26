@@ -10,11 +10,13 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { PaymentService } from './payment.service';
-import { CreatePaymentDTO, UpdatePaymentDTO } from './dto/payment.dto';
+import { PaymentService } from '../services/payment.service';
+import { CreatePaymentDTO, UpdatePaymentDTO } from '../dto/payment.dto';
 import { InstallmentService } from 'src/installment/installment.service';
 import { ContractService } from 'src/contract/services/contract.service';
 import { InstallmentPaymentService } from 'src/installment/installment-payment.service';
+import { PaymentType } from '../entities/payment.entity';
+import { PaymentAccountService } from '../services/payment-account.service';
 
 @Controller('payment')
 export class PaymentController {
@@ -23,6 +25,7 @@ export class PaymentController {
     private readonly installmentService: InstallmentService,
     private readonly installmentPaymentService: InstallmentPaymentService,
     private readonly contractService: ContractService,
+    private readonly paymentAccountService: PaymentAccountService,
   ) {}
 
   @Post()
@@ -36,6 +39,21 @@ export class PaymentController {
     }
 
     const payment = await this.paymentService.create(data);
+
+    if (
+      data.type === PaymentType.BANK_TRANSFER ||
+      data.type === PaymentType.MOBILE_PAYMENT
+    ) {
+      if (!data.accountId) {
+        throw new BadRequestException(
+          'accountId is required for bank or mobile payments',
+        );
+      }
+      await this.paymentAccountService.create({
+        accountId: data.accountId,
+        paymentId: payment.id,
+      });
+    }
     let availableAmount = data.amount;
     let installmentId = id;
 
