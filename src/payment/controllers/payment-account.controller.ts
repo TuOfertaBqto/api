@@ -10,7 +10,6 @@ export class PaymentAccountController {
     @Query('start') start: string,
     @Query('end') end: string,
   ) {
-    console.log('test');
     if (!start || !end) {
       throw new BadRequestException('Debe indicar startDate y endDate');
     }
