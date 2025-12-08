@@ -34,6 +34,13 @@ export class ContractProductController {
     return { toDispatchQuantity: total };
   }
 
+  @Get('vendor/:vendorId/earnings')
+  async getVendorEarnings(@Param('vendorId') vendorId: string) {
+    return {
+      total: await this.service.getVendorEarnings(vendorId),
+    };
+  }
+
   @Post()
   create(@Body() dto: CreateContractProductDTO[]) {
     return this.service.create(dto);

@@ -35,6 +35,21 @@ export class ContractProductService {
     return item;
   }
 
+  async getVendorEarnings(vendorId: string): Promise<number> {
+    const result = await this.contractProductRepo
+      .createQueryBuilder('cp')
+      .innerJoin('cp.contract', 'c')
+      .where('c.vendor_id = :vendorId', { vendorId })
+      .andWhere('cp.deleted_at IS NULL')
+      .andWhere('cp.status = :status', {
+        status: ContractProductStatus.DISPATCHED,
+      })
+      .select('SUM(cp.installment_amount * cp.quantity * 2)', 'total')
+      .getRawOne<{ total: string }>();
+
+    return Number(result?.total ?? 0);
+  }
+
   async getToDispatchQuantity(productId: string): Promise<number> {
     const result: { total: string | null } | undefined =
       await this.contractProductRepo
