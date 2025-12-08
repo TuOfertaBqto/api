@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import {
   BulkUpdateContractProductDTO,
   CreateContractProductDTO,
+  ProductDispatchedTotalsDTO,
   UpdateContractProductDTO,
 } from '../dto/contract-product.dto';
 import { Contract } from '../entities/contract.entity';
@@ -62,6 +63,23 @@ export class ContractProductService {
         .getRawOne();
 
     return Number(result?.total ?? 0);
+  }
+
+  async getProductDispatchedTotals(): Promise<ProductDispatchedTotalsDTO[]> {
+    return await this.contractProductRepo
+      .createQueryBuilder('cp')
+      .innerJoin('cp.product', 'p')
+      .where('cp.status = :status', {
+        status: ContractProductStatus.DISPATCHED,
+      })
+      .andWhere('cp.deleted_at IS NULL')
+      .select('p.id', 'productId')
+      .addSelect('p.name', 'productName')
+      .addSelect('SUM(cp.quantity)', 'totalDispatched')
+      .groupBy('p.id')
+      .addGroupBy('p.name')
+      .orderBy('"totalDispatched"', 'DESC')
+      .getRawMany<ProductDispatchedTotalsDTO>();
   }
 
   async create(dto: CreateContractProductDTO[]): Promise<ContractProduct[]> {

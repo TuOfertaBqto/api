@@ -11,6 +11,7 @@ import { ContractProductService } from '../services/contract-product.service';
 import {
   BulkUpdateContractProductDTO,
   CreateContractProductDTO,
+  ProductDispatchedTotalsDTO,
   UpdateContractProductDTO,
 } from '../dto/contract-product.dto';
 
@@ -21,6 +22,11 @@ export class ContractProductController {
   @Get()
   findAll() {
     return this.service.findAll();
+  }
+
+  @Get('dispatched')
+  getDispatchedTotals(): Promise<ProductDispatchedTotalsDTO[]> {
+    return this.service.getProductDispatchedTotals();
   }
 
   @Get(':id')
