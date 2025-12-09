@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ContractProductService } from '../services/contract-product.service';
 import {
@@ -25,8 +26,17 @@ export class ContractProductController {
   }
 
   @Get('dispatched')
-  getDispatchedTotals(): Promise<ProductDispatchedTotalsDTO[]> {
-    return this.service.getProductDispatchedTotals();
+  async getDispatchedTotals(
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 10,
+  ): Promise<{
+    data: ProductDispatchedTotalsDTO[];
+    total: number;
+  }> {
+    const data = await this.service.getProductDispatchedTotals(page, limit);
+    const total = await this.service.countProductDispatchedTotals();
+
+    return { data, total };
   }
 
   @Get(':id')

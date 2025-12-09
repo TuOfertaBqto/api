@@ -65,8 +65,13 @@ export class ContractProductService {
     return Number(result?.total ?? 0);
   }
 
-  async getProductDispatchedTotals(): Promise<ProductDispatchedTotalsDTO[]> {
-    return await this.contractProductRepo
+  async getProductDispatchedTotals(
+    page: number,
+    limit: number,
+  ): Promise<ProductDispatchedTotalsDTO[]> {
+    const skip = (page - 1) * limit;
+
+    const subQuery = this.contractProductRepo
       .createQueryBuilder('cp')
       .innerJoin('cp.product', 'p')
       .where('cp.status = :status', {
@@ -77,9 +82,31 @@ export class ContractProductService {
       .addSelect('p.name', 'productName')
       .addSelect('SUM(cp.quantity)', 'totalDispatched')
       .groupBy('p.id')
-      .addGroupBy('p.name')
-      .orderBy('"totalDispatched"', 'DESC')
+      .addGroupBy('p.name');
+
+    return await this.contractProductRepo.manager
+      .createQueryBuilder()
+      .select('*')
+      .from('(' + subQuery.getQuery() + ')', 'sub')
+      .setParameters(subQuery.getParameters())
+      .orderBy('sub."totalDispatched"', 'DESC')
+      .offset(skip)
+      .limit(limit)
       .getRawMany<ProductDispatchedTotalsDTO>();
+  }
+
+  async countProductDispatchedTotals(): Promise<number> {
+    const result = await this.contractProductRepo
+      .createQueryBuilder('cp')
+      .innerJoin('cp.product', 'p')
+      .where('cp.status = :status', {
+        status: ContractProductStatus.DISPATCHED,
+      })
+      .andWhere('cp.deleted_at IS NULL')
+      .select('COUNT(DISTINCT p.id)', 'count')
+      .getRawOne<{ count: string }>();
+
+    return Number(result?.count ?? 0);
   }
 
   async create(dto: CreateContractProductDTO[]): Promise<ContractProduct[]> {
