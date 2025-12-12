@@ -5,6 +5,7 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
+  IsString,
   IsUUID,
   Min,
 } from 'class-validator';
@@ -51,4 +52,15 @@ export class BulkUpdateContractProductDTO extends PartialType(
   @IsUUID()
   @IsOptional()
   id?: string;
+}
+
+export class ProductDispatchedTotalsDTO {
+  @IsUUID()
+  productId: string;
+
+  @IsString()
+  productName: string;
+
+  @IsString()
+  totalDispatched: string;
 }
