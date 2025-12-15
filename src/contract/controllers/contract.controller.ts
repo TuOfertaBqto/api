@@ -105,6 +105,11 @@ export class ContractController {
     }
   }
 
+  @Get('count/request')
+  async countRequestContract() {
+    return this.contractService.countRequestContracts();
+  }
+
   @Get('count')
   async countContracts() {
     const actives = await this.contractService.countActiveContracts();
