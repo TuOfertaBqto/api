@@ -246,4 +246,12 @@ export class ContractService {
       },
     });
   }
+
+  async countRequestContracts(): Promise<number> {
+    return this.contractRepo.count({
+      where: {
+        status: ContractStatus.PENDING,
+      },
+    });
+  }
 }
