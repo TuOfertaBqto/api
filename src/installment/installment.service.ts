@@ -15,6 +15,7 @@ import {
 import { plainToInstance } from 'class-transformer';
 import { Installment } from './entities/installment.entity';
 import { InstallmentPayment } from './entities/installment-payment.entity';
+import { PaymentType } from 'src/payment/entities/payment.entity';
 type RawRow = {
   vendorId: string;
   code: string;
@@ -624,6 +625,48 @@ export class InstallmentService {
 
     return result as VendorPaymentsTotals;
   }
+  async getCollectionEffectivenessByVendor(vendorId: string): Promise<number> {
+    const result = await this.repo
+      .createQueryBuilder('i')
+      .innerJoin('i.contract', 'c')
+      .innerJoin('c.vendorId', 'v')
+      .where('v.id = :vendorId', { vendorId })
+      .andWhere('i.due_date < NOW()')
+      .andWhere('i.deleted_at IS NULL')
+      .andWhere('c.deleted_at IS NULL')
+      .andWhere(
+        `
+      NOT EXISTS (
+        SELECT 1
+        FROM installment_payment ip
+        INNER JOIN payment p ON p.id = ip.payment_id
+        WHERE ip.installment_id = i.id
+          AND p.type = :discountType
+          AND p.deleted_at IS NULL
+      )
+      `,
+        { discountType: PaymentType.DISCOUNT },
+      )
+      .select(
+        `
+      ROUND(
+        AVG(
+          CASE
+            WHEN i.paid_at IS NOT NULL
+              THEN EXTRACT(DAY FROM (i.paid_at - i.due_date))
+            ELSE EXTRACT(DAY FROM (NOW() - i.due_date))
+          END
+        ),
+        2
+      )
+      `,
+        'avgCollectionDays',
+      )
+      .getRawOne<{ avgCollectionDays: string | null }>();
+
+    return result?.avgCollectionDays ? Number(result.avgCollectionDays) : 0;
+  }
+
   async deleteByContractId(contractId: string): Promise<void> {
     const payments = await this.repo.find({
       where: { contract: { id: contractId } },

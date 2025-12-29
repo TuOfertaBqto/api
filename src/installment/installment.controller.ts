@@ -64,6 +64,11 @@ export class InstallmentController {
     return totalInstallments * 0.3 > overdueInstallments;
   }
 
+  @Get('vendor/:vendorId/collection-effectiveness')
+  getVendorEffectiveness(@Param('vendorId') vendorId: string) {
+    return this.service.getCollectionEffectivenessByVendor(vendorId);
+  }
+
   @Get('vendor/:vendorId')
   findAllByVendor(@Param('vendorId') vendorId: string) {
     return this.service.findAll(vendorId);
