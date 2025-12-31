@@ -653,8 +653,8 @@ export class InstallmentService {
         AVG(
           CASE
             WHEN i.paid_at IS NOT NULL
-              THEN EXTRACT(DAY FROM (i.paid_at - i.due_date))
-            ELSE EXTRACT(DAY FROM (NOW() - i.due_date))
+              THEN (i.paid_at::date - i.due_date::date)
+            ELSE (CURRENT_DATE - i.due_date::date)
           END
         ),
         2
