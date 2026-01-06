@@ -49,6 +49,13 @@ export class User extends BaseModel {
   @Column({ type: 'text', name: 'document_id_photo', nullable: true })
   documentIdPhoto: string;
 
+  @Column({
+    type: 'boolean',
+    name: 'is_active',
+    default: true,
+  })
+  isActive: boolean;
+
   @OneToMany(() => Contract, (contract) => contract.vendorId)
   contracts: Contract[];
 }

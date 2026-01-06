@@ -1,4 +1,5 @@
 import {
+  IsBoolean,
   IsEmail,
   IsEnum,
   IsNotEmpty,
@@ -42,6 +43,10 @@ export class UserDTO {
   @IsString()
   @IsOptional()
   documentIdPhoto?: string;
+
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
 }
 
 export class CreateUserDTO extends UserDTO {
