@@ -571,6 +571,7 @@ export class InstallmentService {
       .addGroupBy('vendor.code')
       .addGroupBy('vendor.firstName')
       .addGroupBy('vendor.lastName')
+      .orderBy('vendor.firstName', 'ASC')
       .getRawMany();
   }
   async getGlobalPaymentsSummary(): Promise<VendorPaymentsTotals> {

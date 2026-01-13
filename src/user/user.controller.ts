@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Delete,
   ForbiddenException,
   Get,
   HttpException,
@@ -141,8 +140,8 @@ export class UserController {
     return instanceToPlain(userUpdated) as ResponseUserDTO;
   }
 
-  @Delete(':id')
-  remove(@Param('id') id: string) {
+  @Patch(':id/desactivate')
+  desactivate(@Param('id') id: string) {
     return this.userService.remove(id);
   }
 }

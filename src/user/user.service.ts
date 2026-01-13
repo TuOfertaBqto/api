@@ -32,7 +32,7 @@ export class UserService {
   }
 
   async findByEmail(email: string): Promise<User> {
-    const user = await this.userRepository.findOneBy({ email });
+    const user = await this.userRepository.findOneBy({ email, isActive: true });
     if (!user) {
       throw new BadRequestException('Invalid request');
     }
@@ -44,16 +44,22 @@ export class UserService {
 
     if (role === UserRole.VENDOR) {
       users = await this.userRepository.find({
-        where: [{ role: UserRole.VENDOR }, { code: Not(IsNull()) }],
+        where: [
+          { role: UserRole.VENDOR, isActive: true },
+          { code: Not(IsNull()), isActive: true },
+        ],
         order: { firstName: 'ASC' },
       });
     } else if (role) {
       users = await this.userRepository.find({
-        where: { role },
+        where: { role, isActive: true },
         order: { firstName: 'ASC' },
       });
     } else {
-      users = await this.userRepository.find({ order: { firstName: 'ASC' } });
+      users = await this.userRepository.find({
+        where: { isActive: true },
+        order: { firstName: 'ASC' },
+      });
     }
 
     return users as User[];
@@ -61,7 +67,7 @@ export class UserService {
 
   async findOne(id: string): Promise<User> {
     const user = await this.userRepository.findOne({
-      where: { id },
+      where: { id, isActive: true },
     });
 
     if (!user) {
@@ -84,7 +90,7 @@ export class UserService {
   }
 
   async remove(id: string): Promise<void> {
-    await this.userRepository.softDelete(id);
+    await this.userRepository.update(id, { isActive: false });
   }
 
   async getVendorsWithContractsStats(): Promise<VendorStatsDTO[]> {
@@ -92,6 +98,7 @@ export class UserService {
       .createQueryBuilder('vendor')
       .leftJoin('vendor.contracts', 'contract')
       .where('vendor.code IS NOT NULL')
+      .andWhere('vendor.isActive = true')
       .select('vendor.id', 'id')
       .addSelect('vendor.code', 'code')
       .addSelect("vendor.firstName || ' ' || vendor.lastName", 'vendorName')
