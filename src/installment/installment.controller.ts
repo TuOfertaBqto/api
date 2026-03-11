@@ -5,10 +5,15 @@ import {
   ForbiddenException,
   Get,
   Param,
+  ParseArrayPipe,
+  Patch,
   Post,
 } from '@nestjs/common';
 import { InstallmentService } from './installment.service';
-import { CreateListInstallmentDTO } from './dto/installment.dto';
+import {
+  CreateListInstallmentDTO,
+  UpdateManyInstallmentDTO,
+} from './dto/installment.dto';
 import { generateInstallments } from 'src/utils/create-contract-payment';
 import { ValidatedJwt } from 'src/auth/decorators/validated-jwt.decorator';
 import { JwtPayloadDTO } from 'src/auth/dto/jwt.dto';
@@ -122,6 +127,19 @@ export class InstallmentController {
   @Get('contract/:contractId')
   async findByContract(@Param('contractId') contractId: string) {
     return this.service.findByContract(contractId);
+  }
+
+  @Patch()
+  updateMany(
+    @Body(
+      new ParseArrayPipe({
+        items: UpdateManyInstallmentDTO,
+        whitelist: true,
+      }),
+    )
+    installments: UpdateManyInstallmentDTO[],
+  ) {
+    return this.service.updateMany(installments);
   }
 
   @Delete(':id')

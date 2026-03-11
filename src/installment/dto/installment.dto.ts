@@ -66,6 +66,12 @@ export class CreateListInstallmentDTO {
 }
 
 export class UpdateInstallmentDTO extends PartialType(CreateInstallmentDTO) {}
+export class UpdateManyInstallmentDTO extends PartialType(
+  CreateInstallmentDTO,
+) {
+  @IsUUID()
+  id: string;
+}
 
 class ContractDebt {
   contractId: string;

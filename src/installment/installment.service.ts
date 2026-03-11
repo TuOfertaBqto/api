@@ -10,6 +10,7 @@ import { ContractService } from '../contract/services/contract.service';
 import {
   CreateInstallmentDTO,
   UpdateInstallmentDTO,
+  UpdateManyInstallmentDTO,
   VendorsWithDebtsDTO,
 } from './dto/installment.dto';
 import { plainToInstance } from 'class-transformer';
@@ -166,6 +167,11 @@ export class InstallmentService {
     }
     Object.assign(payment, { ...dto });
     return this.repo.save(payment);
+  }
+  async updateMany(
+    installments: UpdateManyInstallmentDTO[],
+  ): Promise<Installment[]> {
+    return this.repo.save(installments);
   }
   async remove(id: string): Promise<void> {
     await this.repo.softDelete(id);
