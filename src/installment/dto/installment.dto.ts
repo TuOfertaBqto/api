@@ -27,11 +27,11 @@ export class CreateInstallmentDTO {
 
   @IsOptional()
   @IsDateString()
-  paidAt?: Date;
+  paidAt?: Date | null;
 
   @IsOptional()
   @IsNumber()
-  debt?: number;
+  debt?: number | null;
 }
 
 class ProductPaymentDTO {

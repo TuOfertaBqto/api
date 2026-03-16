@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { PaymentAccount } from '../entities/payment-account.entity';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { PaymentService } from './payment.service';
 import { AccountService } from 'src/account/account.service';
 import { CreatePaymentAccountDTO } from '../dto/payment-account.dto';
@@ -98,5 +98,13 @@ export class PaymentAccountService {
       countMobile: Number(row.countMobile),
       countTransfer: Number(row.countTransfer),
     }));
+  }
+
+  async deleteByPaymentIds(paymentIds: string[]): Promise<void> {
+    await this.paymentAccountRepository.softDelete({
+      payment: {
+        id: In(paymentIds),
+      },
+    });
   }
 }

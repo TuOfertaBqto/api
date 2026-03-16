@@ -68,7 +68,7 @@ export class PaymentController {
       const installmentDebt = installmentAmount - partialPaymentAmount;
       const amountToPay = Math.min(installmentDebt, availableAmount);
 
-      const newDebt = installment.debt - amountToPay;
+      const newDebt = installment.debt ? installment.debt - amountToPay : 0;
 
       await this.installmentService.update(installment, {
         debt: newDebt,
