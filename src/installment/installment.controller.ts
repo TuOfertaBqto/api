@@ -16,7 +16,6 @@ import {
   UpdateManyInstallmentDTO,
 } from './dto/installment.dto';
 import {
-  calculateInstallmentDebts,
   generateInstallments,
   getNextFortnight,
   getNextSaturday,
@@ -28,6 +27,7 @@ import { InstallmentPaymentService } from './installment-payment.service';
 import { PaymentService } from 'src/payment/services/payment.service';
 import { PaymentAccountService } from 'src/payment/services/payment-account.service';
 import { Agreement } from 'src/contract/entities/contract.entity';
+import { ContractService } from 'src/contract/services/contract.service';
 
 @Controller('installment')
 export class InstallmentController {
@@ -36,6 +36,7 @@ export class InstallmentController {
     private readonly ipService: InstallmentPaymentService,
     private readonly paymentService: PaymentService,
     private readonly pAccountService: PaymentAccountService,
+    private readonly contractService: ContractService,
   ) {}
 
   @Post()
@@ -69,6 +70,15 @@ export class InstallmentController {
       }));
 
     await this.service.updateMany(updated);
+
+    const totalContractAmount = installments.reduce(
+      (acc, inst) => acc + Number(inst.installmentAmount),
+      0,
+    );
+
+    await this.contractService.update(dto.id, {
+      totalPrice: totalContractAmount + extraAmount,
+    });
 
     const nextDate =
       lastInstallment.contract.agreement == Agreement.FIFTEEN_AND_LAST
@@ -208,6 +218,10 @@ export class InstallmentController {
       0,
     );
 
+    await this.contractService.update(contractId, {
+      totalPrice: totalContractAmount,
+    });
+
     let currentBalance = totalContractAmount - totalDiscount;
     let stopCalculating = false;
 
@@ -257,20 +271,6 @@ export class InstallmentController {
     const paymentIds = ipByInstallment.map((ip) => ip.payment.id);
 
     if (paymentIds.length > 0) {
-      //   const ipByPayments = await this.ipService.findByPaymentIds(paymentIds);
-
-      //   const installmentToClear = ipByPayments
-      //     .map((ip) => ip.installment.id)
-      //     .filter((instId) => instId !== id)
-      //     .map((instId) => ({
-      //       id: instId,
-      //       debt: null,
-      //       paidAt: null,
-      //     }));
-
-      //   if (installmentToClear.length > 0) {
-      //     await this.service.updateMany(installmentToClear);
-      //   }
       await this.pAccountService.deleteByPaymentIds(paymentIds);
 
       await this.paymentService.removeMany(paymentIds);
@@ -286,7 +286,51 @@ export class InstallmentController {
       inst.contract.id,
     );
 
-    const installmentDebits = calculateInstallmentDebts(installments, discount);
+    const totalDiscount = discount.reduce(
+      (acc, d) => acc + Number(d.amount),
+      0,
+    );
+
+    const totalContractAmount = installments.reduce(
+      (acc, inst) => acc + Number(inst.installmentAmount),
+      0,
+    );
+
+    await this.contractService.update(inst.contract.id, {
+      totalPrice: totalContractAmount,
+    });
+
+    let currentBalance = totalContractAmount - totalDiscount;
+    let stopCalculating = false;
+
+    const installmentDebits = installments.map((inst) => {
+      if (stopCalculating) {
+        return { id: inst.id, debt: null, paidAt: null };
+      }
+      const totalAbonado = inst.installmentPayments.reduce(
+        (sum, ip) => sum + Number(ip.amount),
+        0,
+      );
+
+      const isPaid = totalAbonado == Number(inst.installmentAmount);
+
+      if (isPaid) {
+        currentBalance -= Number(inst.installmentAmount);
+        return {
+          id: inst.id,
+          debt: Number(currentBalance.toFixed(2)),
+        };
+      } else {
+        currentBalance -= totalAbonado;
+        stopCalculating = true;
+
+        return {
+          id: inst.id,
+          debt: Number(currentBalance.toFixed(2)),
+          paidAt: null,
+        };
+      }
+    });
 
     await this.service.updateMany(installmentDebits);
   }
