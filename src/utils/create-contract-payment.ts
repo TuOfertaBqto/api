@@ -1,5 +1,7 @@
 import { CreateInstallmentDTO } from 'src/installment/dto/installment.dto';
 import { Agreement } from 'src/contract/entities/contract.entity';
+import { Installment } from 'src/installment/entities/installment.entity';
+import { Payment } from 'src/payment/entities/payment.entity';
 
 interface ProductPayment {
   price: number;
@@ -118,4 +120,49 @@ export function generateInstallments(
   }
 
   return payments;
+}
+
+export function calculateInstallmentDebts(
+  installments: Installment[],
+  discount: Payment[],
+) {
+  const totalDiscount = discount.reduce((acc, d) => acc + Number(d.amount), 0);
+
+  const totalContractAmount = installments.reduce(
+    (acc, inst) => acc + Number(inst.installmentAmount),
+    0,
+  );
+
+  let currentBalance = totalContractAmount - totalDiscount;
+  let stopCalculating = false;
+
+  const installmentDebits = installments.map((inst) => {
+    if (stopCalculating) {
+      return { id: inst.id, debt: null, paidAt: null };
+    }
+    const totalAbonado = inst.installmentPayments.reduce(
+      (sum, ip) => sum + Number(ip.amount),
+      0,
+    );
+
+    const isPaid = totalAbonado == Number(inst.installmentAmount);
+
+    if (isPaid) {
+      currentBalance -= Number(inst.installmentAmount);
+      return {
+        id: inst.id,
+        debt: Number(currentBalance.toFixed(2)),
+      };
+    } else {
+      currentBalance -= totalAbonado;
+      stopCalculating = true;
+
+      return {
+        id: inst.id,
+        debt: Number(currentBalance.toFixed(2)),
+        paidAt: null,
+      };
+    }
+  });
+  return installmentDebits;
 }

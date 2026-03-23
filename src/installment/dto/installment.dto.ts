@@ -11,13 +11,18 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
-import { Agreement, Contract } from 'src/contract/entities/contract.entity';
+import { Agreement } from 'src/contract/entities/contract.entity';
 import { Type } from 'class-transformer';
+
+export class ContractRefDTO {
+  @IsUUID()
+  id: string;
+}
 
 export class CreateInstallmentDTO {
   @ValidateNested()
-  @Type(() => Contract)
-  contract: { id: string };
+  @Type(() => ContractRefDTO)
+  contract: ContractRefDTO;
 
   @IsDateString()
   dueDate: string;
