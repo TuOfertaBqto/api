@@ -5,18 +5,39 @@ import {
   ForbiddenException,
   Get,
   Param,
+  ParseArrayPipe,
+  Patch,
   Post,
 } from '@nestjs/common';
 import { InstallmentService } from './installment.service';
-import { CreateListInstallmentDTO } from './dto/installment.dto';
-import { generateInstallments } from 'src/utils/create-contract-payment';
+import {
+  ContractRefDTO,
+  CreateListInstallmentDTO,
+  UpdateManyInstallmentDTO,
+} from './dto/installment.dto';
+import {
+  generateInstallments,
+  getNextFortnight,
+  getNextSaturday,
+} from 'src/utils/create-contract-payment';
 import { ValidatedJwt } from 'src/auth/decorators/validated-jwt.decorator';
 import { JwtPayloadDTO } from 'src/auth/dto/jwt.dto';
 import { UserRole } from 'src/user/entities/user.entity';
+import { InstallmentPaymentService } from './installment-payment.service';
+import { PaymentService } from 'src/payment/services/payment.service';
+import { PaymentAccountService } from 'src/payment/services/payment-account.service';
+import { Agreement } from 'src/contract/entities/contract.entity';
+import { ContractService } from 'src/contract/services/contract.service';
 
 @Controller('installment')
 export class InstallmentController {
-  constructor(private readonly service: InstallmentService) {}
+  constructor(
+    private readonly service: InstallmentService,
+    private readonly ipService: InstallmentPaymentService,
+    private readonly paymentService: PaymentService,
+    private readonly pAccountService: PaymentAccountService,
+    private readonly contractService: ContractService,
+  ) {}
 
   @Post()
   create(@Body() dto: CreateListInstallmentDTO) {
@@ -28,6 +49,52 @@ export class InstallmentController {
     );
 
     return this.service.createMany(payments);
+  }
+  @Post('one')
+  async createOne(@Body() dto: ContractRefDTO) {
+    const installments = await this.service.findByContract(dto.id);
+
+    if (!installments || installments.length === 0) return;
+
+    const lastInstallment = installments.at(-1);
+
+    if (!lastInstallment) return;
+
+    const extraAmount = Number(lastInstallment.installmentAmount);
+
+    const updated = installments
+      .filter((i) => i.debt !== null)
+      .map((i) => ({
+        id: i.id,
+        debt: Number(i.debt) + extraAmount,
+      }));
+
+    await this.service.updateMany(updated);
+
+    const totalContractAmount = installments.reduce(
+      (acc, inst) => acc + Number(inst.installmentAmount),
+      0,
+    );
+
+    await this.contractService.update(dto.id, {
+      totalPrice: totalContractAmount + extraAmount,
+    });
+
+    const nextDate =
+      lastInstallment.contract.agreement == Agreement.FIFTEEN_AND_LAST
+        ? getNextFortnight(lastInstallment.dueDate)
+        : getNextSaturday(
+            lastInstallment.dueDate,
+            lastInstallment.contract.agreement,
+          );
+
+    const newInstallment = {
+      contract: { id: dto.id },
+      installmentAmount: extraAmount,
+      dueDate: nextDate.toISOString(),
+    };
+
+    return this.service.createMany([newInstallment]);
   }
 
   @Get('overdue/customers-by-vendor')
@@ -124,8 +191,147 @@ export class InstallmentController {
     return this.service.findByContract(contractId);
   }
 
+  @Patch()
+  async updateMany(
+    @Body(
+      new ParseArrayPipe({
+        items: UpdateManyInstallmentDTO,
+        whitelist: true,
+      }),
+    )
+    installments: UpdateManyInstallmentDTO[],
+  ) {
+    const update = await this.service.updateMany(installments);
+    const contractId = update[0].contract.id;
+    const res = await this.service.findByContract(contractId);
+
+    const discount =
+      await this.paymentService.findDiscountByContractId(contractId);
+
+    const totalDiscount = discount.reduce(
+      (acc, d) => acc + Number(d.amount),
+      0,
+    );
+
+    const totalContractAmount = installments.reduce(
+      (acc, inst) => acc + Number(inst.installmentAmount),
+      0,
+    );
+
+    await this.contractService.update(contractId, {
+      totalPrice: totalContractAmount,
+    });
+
+    let currentBalance = totalContractAmount - totalDiscount;
+    let stopCalculating = false;
+
+    const installmentUpdates = res.map((inst) => {
+      if (stopCalculating) {
+        return {
+          id: inst.id,
+          debt: null,
+          paidAt: null,
+        };
+      }
+      const totalAbonado = inst.installmentPayments.reduce(
+        (sum, ip) => sum + Number(ip.amount),
+        0,
+      );
+
+      const isPaid = totalAbonado == Number(inst.installmentAmount);
+
+      if (isPaid) {
+        currentBalance -= Number(inst.installmentAmount);
+        return {
+          id: inst.id,
+          debt: Number(currentBalance.toFixed(2)),
+        };
+      } else {
+        currentBalance -= totalAbonado;
+        stopCalculating = true;
+
+        return {
+          id: inst.id,
+          debt: Number(currentBalance.toFixed(2)),
+          paidAt: null,
+        };
+      }
+    });
+
+    await this.service.updateMany(installmentUpdates);
+
+    return res;
+  }
+
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.service.remove(id);
+  async remove(@Param('id') id: string) {
+    const inst = await this.service.findOne(id);
+    const ipByInstallment = await this.ipService.findByInstallmentId(id);
+
+    const paymentIds = ipByInstallment.map((ip) => ip.payment.id);
+
+    if (paymentIds.length > 0) {
+      await this.pAccountService.deleteByPaymentIds(paymentIds);
+
+      await this.paymentService.removeMany(paymentIds);
+
+      await this.ipService.deleteByPaymentIds(paymentIds);
+    }
+
+    await this.service.remove(id);
+
+    const installments = await this.service.findByContract(inst.contract.id);
+
+    const discount = await this.paymentService.findDiscountByContractId(
+      inst.contract.id,
+    );
+
+    const totalDiscount = discount.reduce(
+      (acc, d) => acc + Number(d.amount),
+      0,
+    );
+
+    const totalContractAmount = installments.reduce(
+      (acc, inst) => acc + Number(inst.installmentAmount),
+      0,
+    );
+
+    await this.contractService.update(inst.contract.id, {
+      totalPrice: totalContractAmount,
+    });
+
+    let currentBalance = totalContractAmount - totalDiscount;
+    let stopCalculating = false;
+
+    const installmentDebits = installments.map((inst) => {
+      if (stopCalculating) {
+        return { id: inst.id, debt: null, paidAt: null };
+      }
+      const totalAbonado = inst.installmentPayments.reduce(
+        (sum, ip) => sum + Number(ip.amount),
+        0,
+      );
+
+      const isPaid = totalAbonado == Number(inst.installmentAmount);
+
+      if (isPaid) {
+        currentBalance -= Number(inst.installmentAmount);
+        return {
+          id: inst.id,
+          debt: Number(currentBalance.toFixed(2)),
+        };
+      } else {
+        currentBalance -= totalAbonado;
+        stopCalculating = true;
+
+        return {
+          id: inst.id,
+          debt: Number(currentBalance.toFixed(2)),
+          paidAt: null,
+        };
+      }
+    });
+
+    await this.service.updateMany(installmentDebits);
   }
 }

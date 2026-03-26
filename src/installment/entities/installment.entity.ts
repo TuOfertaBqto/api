@@ -59,7 +59,7 @@ export class Installment extends BaseModel {
   amountPaid: number;
 
   @Column({ type: 'timestamp', name: 'paid_at', nullable: true })
-  paidAt: Date;
+  paidAt: Date | null;
 
   @Column({
     type: 'decimal',
@@ -68,7 +68,7 @@ export class Installment extends BaseModel {
     scale: 2,
     nullable: true,
   })
-  debt: number;
+  debt: number | null;
 
   @OneToMany(() => InstallmentPayment, (ip) => ip.installment)
   installmentPayments: InstallmentPayment[];

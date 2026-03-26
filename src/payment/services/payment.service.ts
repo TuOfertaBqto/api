@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Payment, PaymentType } from '../entities/payment.entity';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { CreatePaymentDTO, UpdatePaymentDTO } from '../dto/payment.dto';
 
 @Injectable()
@@ -29,6 +29,18 @@ export class PaymentService {
     }
     return payment;
   }
+  async findDiscountByContractId(id: string): Promise<Payment[]> {
+    return await this.paymentRepository.find({
+      where: {
+        type: PaymentType.DISCOUNT,
+        installmentPayments: {
+          installment: {
+            contract: { id },
+          },
+        },
+      },
+    });
+  }
 
   async update(id: string, data: UpdatePaymentDTO): Promise<Payment> {
     const payment = await this.findOne(id);
@@ -39,6 +51,12 @@ export class PaymentService {
   async remove(id: string): Promise<void> {
     const payment = await this.findOne(id);
     await this.paymentRepository.softRemove(payment);
+  }
+
+  async removeMany(ids: string[]): Promise<void> {
+    await this.paymentRepository.softDelete({
+      id: In(ids),
+    });
   }
 
   async getPaymentsSummaryByType(startDate: Date, endDate: Date) {
