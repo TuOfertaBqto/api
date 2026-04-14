@@ -34,10 +34,29 @@ export class InstallmentPaymentService {
     });
   }
 
+  async findByInstallmentIds(
+    installmentIds: string[],
+  ): Promise<InstallmentPayment[]> {
+    return await this.repo.find({
+      where: {
+        installment: { id: In(installmentIds) },
+      },
+      relations: ['payment'],
+    });
+  }
+
   async deleteByPaymentIds(paymentIds: string[]): Promise<void> {
     await this.repo.softDelete({
       payment: {
         id: In(paymentIds),
+      },
+    });
+  }
+
+  async deleteByInstallmentIds(installmentIds: string[]): Promise<void> {
+    await this.repo.softDelete({
+      installment: {
+        id: In(installmentIds),
       },
     });
   }
