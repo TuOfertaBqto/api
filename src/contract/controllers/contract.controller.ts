@@ -22,6 +22,10 @@ import { UserRole } from 'src/user/entities/user.entity';
 import { Contract, ContractStatus } from '../entities/contract.entity';
 import { VendorCustomerService } from 'src/user/vendor-customer.service';
 import { CreateContractProductDTO } from '../dto/contract-product.dto';
+import { InstallmentService } from 'src/installment/installment.service';
+import { InstallmentPaymentService } from 'src/installment/installment-payment.service';
+import { PaymentService } from 'src/payment/services/payment.service';
+import { PaymentAccountService } from 'src/payment/services/payment-account.service';
 
 @Controller('contract')
 export class ContractController {
@@ -29,6 +33,10 @@ export class ContractController {
     private readonly contractService: ContractService,
     private readonly contraProducService: ContractProductService,
     private readonly vendorCustomerService: VendorCustomerService,
+    private readonly installmentService: InstallmentService,
+    private readonly ipService: InstallmentPaymentService,
+    private readonly paymentService: PaymentService,
+    private readonly pAccountService: PaymentAccountService,
   ) {}
 
   @Post()
@@ -186,7 +194,32 @@ export class ContractController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  async remove(@Param('id') id: string) {
+    await this.contraProducService.deleteByContractId(id);
+
+    const installments = await this.installmentService.findByContract(id);
+    const installmentIds = installments.map((i) => i.id);
+
+    // Eliminar las installments payment
+    const iPayments = await this.ipService.findByInstallmentIds(installmentIds);
+    await this.ipService.deleteByInstallmentIds(installmentIds);
+
+    const paymentIds = iPayments.map((ip) => ip.payment.id);
+
+    // Eliminar las installments
+
+    await this.installmentService.deleteByContractId(id);
+
+    // Eliminar los payments
+
+    await this.paymentService.removeMany(paymentIds);
+
+    // elimiar los payments account
+
+    await this.pAccountService.deleteByPaymentIds(paymentIds);
+
+    // eliminar el contrato
+
     return this.contractService.remove(id);
   }
 }

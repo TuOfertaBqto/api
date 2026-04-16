@@ -8,11 +8,13 @@ import { ContractProduct } from './entities/contract-product.entity';
 import { ContractProductController } from './controllers/contract-product.controller';
 import { ContractProductService } from './services/contract-product.service';
 import { InstallmentModule } from 'src/installment/installment.module';
+import { PaymentModule } from 'src/payment/payment.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Contract, ContractProduct]),
     UserModule,
+    PaymentModule,
     forwardRef(() => InstallmentModule),
   ],
   providers: [ContractService, ContractProductService],

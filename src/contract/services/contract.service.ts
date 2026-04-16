@@ -203,9 +203,6 @@ export class ContractService {
   async remove(id: string): Promise<void> {
     const contract = await this.findOne(id);
 
-    await this.contractProductService.deleteByContractId(id);
-    await this.installmentService.deleteByContractId(id);
-
     await this.contractRepo.softRemove(contract);
   }
 
