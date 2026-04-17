@@ -36,11 +36,13 @@ export class ContractProductService {
     return item;
   }
 
-  async getVendorEarnings(vendorId: string): Promise<number> {
+  async getActiveEarningsByVendor(vendorId: string): Promise<number> {
     const result = await this.contractProductRepo
       .createQueryBuilder('cp')
       .innerJoin('cp.contract', 'c')
       .where('c.vendor_id = :vendorId', { vendorId })
+      .andWhere('c.deleted_at IS NULL')
+      .andWhere('c.end_date IS NULL')
       .andWhere('cp.deleted_at IS NULL')
       .andWhere('cp.status = :status', {
         status: ContractProductStatus.DISPATCHED,
