@@ -51,9 +51,9 @@ export class ContractProductController {
   }
 
   @Get('vendor/:vendorId/earnings')
-  async getVendorEarnings(@Param('vendorId') vendorId: string) {
+  async getActiveEarnings(@Param('vendorId') vendorId: string) {
     return {
-      total: await this.service.getVendorEarnings(vendorId),
+      total: await this.service.getActiveEarningsByVendor(vendorId),
     };
   }
 
