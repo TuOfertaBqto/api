@@ -44,6 +44,11 @@ export class ContractProductController {
     return this.service.findOne(id);
   }
 
+  @Get('contract/:id')
+  findByContract(@Param('id') id: string) {
+    return this.service.findAllByContractId(id);
+  }
+
   @Get('to-dispatch/:productId')
   async getToDispatchQuantity(@Param('productId') productId: string) {
     const total = await this.service.getToDispatchQuantity(productId);
