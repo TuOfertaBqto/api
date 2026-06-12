@@ -2,7 +2,7 @@ import { BaseModel } from 'src/utils/entity';
 import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from 'typeorm';
 import { Contract } from './contract.entity';
 import { Product } from 'src/product/entities/product.entity';
-import { ProductDetails } from './product-details.entity';
+import { ProductDetails } from '../../product-details/entities/product-details.entity';
 
 export enum ContractProductStatus {
   TO_BUY = 'to_buy',

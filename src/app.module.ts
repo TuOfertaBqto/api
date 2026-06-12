@@ -12,6 +12,7 @@ import { EmailModule } from './email/email.module';
 import { InstallmentModule } from './installment/installment.module';
 import { PaymentModule } from './payment/payment.module';
 import { AccountModule } from './account/account.module';
+import { ProductDetailsModule } from './product-details/product-details.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { AccountModule } from './account/account.module';
     InstallmentModule,
     PaymentModule,
     AccountModule,
+    ProductDetailsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
