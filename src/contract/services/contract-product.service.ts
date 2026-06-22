@@ -27,6 +27,13 @@ export class ContractProductService {
     });
   }
 
+  async findAllByContractId(contractId: string): Promise<ContractProduct[]> {
+    return this.contractProductRepo.find({
+      where: { contract: { id: contractId } },
+      relations: ['product', 'details'],
+    });
+  }
+
   async findOne(id: string): Promise<ContractProduct> {
     const item = await this.contractProductRepo.findOne({
       where: { id },
